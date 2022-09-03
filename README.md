@@ -15,7 +15,7 @@ Left click any of the unknown cards to learn it.
 
 
 #### To install:
-Download AscendedSkillCards.7z -> unpack and put folder in your addons folder.
+Download [AscendedSkillCards.7z](https://github.com/Sigbear/AscendedSkillCards/releases/download/1.0.0/AscendedSkillCards.7z) -> unpack AscendedSkillCards folder and put it in your addons folder.
 
 
 #### Known issues:  
