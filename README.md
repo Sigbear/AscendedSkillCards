@@ -2,7 +2,7 @@
 #### A quality of life addon that helps you with the process of opening, upgrading and learning skill cards, by displaying a small GUI, which keeps track of the cards in your inventory.
 
 #### Features:
-* When you open a sealed deck the GUI will show automatically and inform you of your current count for (non-golden) skill cards.
+* When you open a sealed card the GUI will show automatically and inform you of your current count for (non-golden) skill cards.
 * Shows card counter of each rarity so you can easily see if you can upgrade to a higher rarity.
 * Option to auto show GUI when opening a sealed deck
 
