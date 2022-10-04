@@ -1,10 +1,11 @@
 local ASC = LibStub("AceAddon-3.0"):NewAddon("AscendedSkillCards", "AceEvent-3.0", "AceConsole-3.0")
 
 -- enable to spam debug messages
-local isDebugging = false
+local isDebugging = true
 
 -- GUI
 local topSkillCardFrame = CreateFrame("Frame", "SkillCardContainerFrame", UIParent, "GameTooltipTemplate")
+topSkillCardFrame:SetFrameStrata("DIALOG")
 local closeSkillCardFrameButton = CreateFrame("Button", "skillCardFrameCloseButton", topSkillCardFrame,
   "UIPanelCloseButton")
 local skillCardFrameOptionsButton = CreateFrame("Button", "skillCardFrameOptionsButton", topSkillCardFrame)
@@ -13,6 +14,17 @@ local unknownSkillCardsInInvTitleText = nil
 local menuTexts = {
   UnknownCardsInInv = "Unknown skill cards in inv",
   NoUnknownCardsInInv = "No unknown cards found"
+}
+
+-- Gossip frame interaction buttons Tooltip
+local upgradeCardsButtonTooltip = CreateFrame("GameTooltip", "GossipFrameInteractionTooltip", UIParent,
+  "GameTooltipTemplate")
+local upgradeCardsTooltipData =
+{
+  {
+    header = "Upgrade",
+    text = "Upgrades skill cards to the next rarity in the order of lowest to highest. |cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\nThis will try to select a dialogue option according to how many cards you have in your inventory automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
+  },
 }
 
 -- EasyMenu
@@ -35,6 +47,10 @@ local testCardIndex = 0
 -- unknown skill card "bag slot"
 local unknownSkillCards = {}
 local unknownCards = 0
+local commonCards = 0
+local uncommonCards = 0
+local rareCards = 0
+local totalCards = 0
 
 -- reuse card frames
 local buttonFramePool = {}
@@ -48,7 +64,8 @@ local alreadyOpenedVanityTab = false
 -- settings
 if not AscendedSkillCardsDB then
   AscendedSkillCardsDB = {
-    AutoShow = true
+    AutoShow = true,
+    EnableTooltips = true
   }
 end
 
@@ -93,38 +110,88 @@ end
 
 function ASC:DisableAddon()
   topSkillCardFrame:Hide()
-  -- if (not AscendedSkillCardsDB.AutoShow) then
-  --   DebugPrint("Not set to auto show. Unregistering BAG_UPDATE")
-  --   self:UnregisterEvent("BAG_UPDATE")
-  -- end
 end
 
 function ASC:ToggleAutoShow()
   AscendedSkillCardsDB.AutoShow = not AscendedSkillCardsDB.AutoShow
-  -- if(AscendedSkillCardsDB.AutoShow)
-  -- then
-  --   self:RegisterEvent("CHAT_MSG_LOOT")
-  -- else
-  --   self:UnregisterEvent("CHAT_MSG_LOOT")
-  -- end
-  -- DebugPrint("CHAT_MSG_LOOT event registered: " .. tostring(AscendedSkillCardsDB.AutoShow))
+end
+
+function ASC:ToggleTooltips()
+  AscendedSkillCardsDB.EnableTooltips = not AscendedSkillCardsDB.EnableTooltips
 end
 
 local function CreateAndShowOptionsMenu()
   local menu = {
-    { text = "Settings",
+    {
+      text = "Settings",
       isTitle = true
     },
-    { text = "Auto show",
+    {
+      text = "Auto show",
       keepShownOnClick = true,
       tooltipTitle = "Auto show",
       tooltipOnButton = true,
       checked = AscendedSkillCardsDB.AutoShow,
       tooltipText = "Show window automatically when opening a sealed card",
       func = ASC.ToggleAutoShow
+    },
+    {
+      text = "Show tooltips",
+      keepShownOnClick = true,
+      tooltipTitle = "Show tooltips",
+      tooltipOnButton = true,
+      checked = AscendedSkillCardsDB.EnableTooltips,
+      tooltipText = "Enable button tooltips",
+      func = ASC.ToggleTooltips
     }
   }
-  EasyMenu(menu, skillCardFrameOptionsMenu, skillCardFrameOptionsButton, 0, 87, "MENU")
+  EasyMenu(menu, skillCardFrameOptionsMenu, skillCardFrameOptionsButton, 0, 103, "MENU")
+end
+
+local function SetButtonTooltipText(tooltipIndex)
+  local tooltipData = upgradeCardsTooltipData[tooltipIndex]
+  local btn = upgradeCardsTooltipData[tooltipIndex].button
+  local tooltip = upgradeCardsButtonTooltip
+  btn:SetScript("OnEnter", function(self, event, ...)
+    tooltip:SetOwner(topSkillCardFrame, "ANCHOR_TOPRIGHT")
+    tooltip:AddLine(tooltipData["header"], 1, 1, 1)
+    tooltip:AddLine(tooltipData["text"], 1, 1, 1, true)
+    tooltip:Show()
+  end)
+  btn:SetScript("OnLeave", function(self, event, ...)
+    tooltip:ClearLines()
+    tooltip:Hide()
+  end)
+end
+
+local ScanForUnknownSkillCards
+
+local function UpgradeCards()
+  ScanForUnknownSkillCards()
+  if (totalCards < 10) then return end
+  local index = nil
+  if (uncommonCards + commonCards > 9) then
+    index = 2
+  elseif (rareCards > 9) then
+    index = 3
+  end
+  if (index == nil) then return end
+  print("Index: " .. tostring(index))
+  _G["GossipTitleButton" .. index]:Click()
+  _G["StaticPopup1Button1"]:Click()
+end
+
+local function CreateGossipFrameInteractionButtons()
+  DebugPrint("Create button!")
+  upgradeCardsTooltipData[1].button = CreateFrame("Button", "UpgradeCardsButton", topSkillCardFrame,
+    "UIPanelButtonTemplate")
+  local btn = upgradeCardsTooltipData[1].button
+  btn:SetPoint("TOPRIGHT", -15, -35)
+  btn:SetWidth(70)
+  btn:SetHeight(30)
+  btn:SetText("Upgrade")
+  btn:SetScript("OnClick", function(self, button) UpgradeCards() end)
+  SetButtonTooltipText(1)
 end
 
 local function SetupGUI()
@@ -154,6 +221,9 @@ local function SetupGUI()
   uncommonCounterText:SetText("|cff1eff00Uncommon|r:")
   rareCounterText:SetText("|cff0070ddRare|r: ")
   epicCounterText:SetText("|cffa335eeEpic|r: ")
+
+  -- upgrade btns
+  CreateGossipFrameInteractionButtons()
 
   -- unknown cards
   unknownSkillCardsInInvTitleText = CreateText(topSkillCardFrame, menuTexts.NoUnknownCardsInInv, 0, -110, true)
@@ -193,16 +263,16 @@ local function SetupGUI()
   end)
 end
 
-local function ScanForUnknownSkillCards()
+ScanForUnknownSkillCards = function()
 
   table.wipe(unknownSkillCards)
 
-  local common = 0
-  local uncommon = 0
-  local rare = 0
-  local epic = 0
+  commonCards = 0
+  uncommonCards = 0
+  rareCards = 0
+  local epicCards = 0
   unknownCards = 0
-  local totalCards = 0
+  totalCards = 0
 
   if (alreadyOpenedVanityTab == false) then
     Collections:Show()
@@ -227,13 +297,13 @@ local function ScanForUnknownSkillCards()
             -- rarity counter
             totalCards = totalCards + itemCount
             if (itemQuality == 1) then
-              common = common + itemCount
+              commonCards = commonCards + itemCount
             elseif (itemQuality == 2) then
-              uncommon = uncommon + itemCount
+              uncommonCards = uncommonCards + itemCount
             elseif (itemQuality == 3) then
-              rare = rare + itemCount
+              rareCards = rareCards + itemCount
             elseif (itemQuality == 4) then
-              epic = epic + itemCount
+              epicCards = epicCards + itemCount
             end
 
             -- check if skillcard is unknown
@@ -251,10 +321,10 @@ local function ScanForUnknownSkillCards()
     end
   end
 
-  commonCounterText:SetText("|cffffffffCommon|r: " .. common)
-  uncommonCounterText:SetText("|cff1eff00Uncommon|r: " .. uncommon)
-  rareCounterText:SetText("|cff0070ddRare|r: " .. rare)
-  epicCounterText:SetText("|cffa335eeEpic|r: " .. epic)
+  commonCounterText:SetText("|cffffffffCommon|r: " .. commonCards)
+  uncommonCounterText:SetText("|cff1eff00Uncommon|r: " .. uncommonCards)
+  rareCounterText:SetText("|cff0070ddRare|r: " .. rareCards)
+  epicCounterText:SetText("|cffa335eeEpic|r: " .. epicCards)
 end
 
 function ASC:EnableAddon()
@@ -408,6 +478,9 @@ function ASC:SlashCommand(msg)
   elseif (msg == "reset") then
     topSkillCardFrame:SetPoint("CENTER", 0, 0)
     print("Skillcard frame postion reset.")
+  elseif (msg == "debug") then
+    isDebugging = not isDebugging
+    print("Debug is: " .. tostring(isDebugging))
   elseif (isDebugging) then
     if (msg == "scan") then
       ScanForUnknownSkillCards()
