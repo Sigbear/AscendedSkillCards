@@ -74,7 +74,8 @@ if not AscendedSkillCardsDB then
   AscendedSkillCardsDB = {
     AutoShow = true,
     EnableTooltips = true,
-    isDebugging = false
+    isDebugging = false,
+    ForceUpgradeCards = false
   }
 end
 
@@ -129,6 +130,10 @@ function ToggleTooltips()
   AscendedSkillCardsDB.EnableTooltips = not AscendedSkillCardsDB.EnableTooltips
 end
 
+function ToggleForceUpgradeCards()
+  AscendedSkillCardsDB.ForceUpgradeCards = not AscendedSkillCardsDB.ForceUpgradeCards
+end
+
 local function CreateAndShowOptionsMenu()
   local menu = {
     {
@@ -152,9 +157,18 @@ local function CreateAndShowOptionsMenu()
       checked = AscendedSkillCardsDB.EnableTooltips,
       tooltipText = "Enable button tooltips",
       func = ToggleTooltips
+    },
+    {
+      text = "Force Upgrade",
+      keepShownOnClick = true,
+      tooltipTitle = "Force Upgrade",
+      tooltipOnButton = true,
+      checked = AscendedSkillCardsDB.ForceUpgradeCards,
+      tooltipText = "Upgrade even if you have unlearned skill cards in inventory",
+      func = ToggleForceUpgradeCards
     }
   }
-  EasyMenu(menu, skillCardFrameOptionsMenu, skillCardFrameOptionsButton, 0, 103, "MENU")
+  EasyMenu(menu, skillCardFrameOptionsMenu, skillCardFrameOptionsButton, 0, 119, "MENU")
 end
 
 local function SetButtonTooltipText(btn, tooltipIndex)
@@ -182,13 +196,17 @@ end
 
 local function ExchangeCards(operationIndex)
   if (not operationIndex) then return end
+  if (not AscendedSkillCardsDB.ForceUpgradeCards and unknownCards ~= 0) then
+    DisplayErrorMessage("You have unlearned skill cards in inventory.")
+    return
+  end
   ScanForUnknownSkillCards()
   local gossipFrameDialogueOptionIndex = nil
 
   -- Upgrade cards to next rarity
   if (operationIndex == 1) then
     if (totalCards < 10) then
-      DisplayErrorMessage("You don't have engouh cards to upgrade")
+      DisplayErrorMessage("You don't have enough cards for an upgrade")
       return
     end
     if (uncommonCards + commonCards > 9) then
@@ -199,7 +217,7 @@ local function ExchangeCards(operationIndex)
 
   elseif operationIndex == 2 then
     if (totalCards < 5) then
-      DisplayErrorMessage("You don't have enough cards to exchange")
+      DisplayErrorMessage("You don't have enough cards for an exchange")
       return
     end
     gossipFrameDialogueOptionIndex = 1
