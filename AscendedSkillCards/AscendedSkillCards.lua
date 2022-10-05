@@ -3,6 +3,9 @@ local ASC = LibStub("AceAddon-3.0"):NewAddon("AscendedSkillCards", "AceEvent-3.0
 -- enable to spam debug messages
 local isDebugging = true
 
+-- forward declaration
+local ScanForUnknownSkillCards
+
 -- GUI
 local topSkillCardFrame = CreateFrame("Frame", "SkillCardContainerFrame", UIParent, "GameTooltipTemplate")
 topSkillCardFrame:SetFrameStrata("DIALOG")
@@ -19,12 +22,20 @@ local menuTexts = {
 -- Gossip frame interaction buttons Tooltip
 local upgradeCardsButtonTooltip = CreateFrame("GameTooltip", "GossipFrameInteractionTooltip", UIParent,
   "GameTooltipTemplate")
-local upgradeCardsTooltipData =
+local exchangeCardsTooltipData =
 {
   {
     header = "Upgrade",
-    text = "Upgrades skill cards to the next rarity in the order of lowest to highest. |cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\nThis will try to select a dialogue option according to how many cards you have in your inventory automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
+    text = "Upgrades skill cards to the next rarity in the order of lowest to highest.",
+    warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
+    "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
   },
+  {
+    header = "Exchange",
+    text = "Exchange 5 random cards for sealed decks.",
+    warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
+    "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
+  }
 }
 
 -- EasyMenu
@@ -148,15 +159,17 @@ local function CreateAndShowOptionsMenu()
   EasyMenu(menu, skillCardFrameOptionsMenu, skillCardFrameOptionsButton, 0, 103, "MENU")
 end
 
-local function SetButtonTooltipText(tooltipIndex)
-  local tooltipData = upgradeCardsTooltipData[tooltipIndex]
-  local btn = upgradeCardsTooltipData[tooltipIndex].button
+local function SetButtonTooltipText(btn, tooltipIndex)
+  local tooltipData = exchangeCardsTooltipData[tooltipIndex]
   local tooltip = upgradeCardsButtonTooltip
   btn:SetScript("OnEnter", function(self, event, ...)
-    tooltip:SetOwner(topSkillCardFrame, "ANCHOR_TOPRIGHT")
-    tooltip:AddLine(tooltipData["header"], 1, 1, 1)
-    tooltip:AddLine(tooltipData["text"], 1, 1, 1, true)
-    tooltip:Show()
+    if (AscendedSkillCardsDB.EnableTooltips) then
+      tooltip:SetOwner(topSkillCardFrame, "ANCHOR_TOPRIGHT")
+      tooltip:AddLine(tooltipData["header"], 1, 1, 1)
+      tooltip:AddLine(tooltipData["text"], 1, 1, 1, true)
+      tooltip:AddLine(tooltipData["warning"], 1, 1, 1, true)
+      tooltip:Show()
+    end
   end)
   btn:SetScript("OnLeave", function(self, event, ...)
     tooltip:ClearLines()
