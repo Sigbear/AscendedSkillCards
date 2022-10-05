@@ -376,7 +376,6 @@ function ASC:EnableAddon()
     firstTimeLoadingMenu = false
   end
   topSkillCardFrame:Show()
-  -- self:RegisterEvent("BAG_UPDATE")
 end
 
 local function AddOrReuseSkillCardButtonFrame(skillCardId, skillCardBagSlot, iterator)
@@ -494,7 +493,6 @@ function ASC:CHAT_MSG_LOOT(_, ...)
   if (AscendedSkillCardsDB.AutoShow) then
     local lootText = select(1, ...)
     local isSkillCard, isGoldenSkillCard = CheckStringForSkillCard(lootText)
-    -- DebugPrint("Detected:" .. lootText)
     if (isSkillCard and not isGoldenSkillCard) then
       DebugPrint("Parsed item to be skill card, auto showing window")
       ASC:EnableAddon()
