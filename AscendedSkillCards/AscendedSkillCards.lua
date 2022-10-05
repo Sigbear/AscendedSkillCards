@@ -1,8 +1,5 @@
 local ASC = LibStub("AceAddon-3.0"):NewAddon("AscendedSkillCards", "AceEvent-3.0", "AceConsole-3.0")
 
--- enable to spam debug messages
-local isDebugging = true
-
 -- forward declaration
 local ScanForUnknownSkillCards
 
@@ -76,7 +73,8 @@ local alreadyOpenedVanityTab = false
 if not AscendedSkillCardsDB then
   AscendedSkillCardsDB = {
     AutoShow = true,
-    EnableTooltips = true
+    EnableTooltips = true,
+    isDebugging = false
   }
 end
 
@@ -91,7 +89,7 @@ local function pt(table)
 end
 
 local function DebugPrint(string)
-  if (isDebugging) then print(string) end
+  if (AscendedSkillCardsDB.isDebugging) then print(string) end
 end
 
 local function CheckStringForSkillCard(string)
@@ -209,6 +207,7 @@ local function ExchangeCards(operationIndex)
   -- if not set by this point, exit.
   if (gossipFrameDialogueOptionIndex == nil) then return end
 
+  DebugPrint("GossipFrameIndex: " .. gossipFrameDialogueOptionIndex)
   _G["GossipTitleButton" .. gossipFrameDialogueOptionIndex]:Click()
   _G["StaticPopup1Button1"]:Click()
 end
@@ -518,9 +517,9 @@ function ASC:SlashCommand(msg)
     topSkillCardFrame:SetPoint("CENTER", 0, 0)
     print("Skillcard frame postion reset.")
   elseif (msg == "debug") then
-    isDebugging = not isDebugging
-    print("Debug is: " .. tostring(isDebugging))
-  elseif (isDebugging) then
+    AscendedSkillCardsDB.isDebugging = not AscendedSkillCardsDB.isDebugging
+    print("Debug is: " .. tostring(AscendedSkillCardsDB.isDebugging))
+  elseif (AscendedSkillCardsDB.isDebugging) then
     if (msg == "scan") then
       ScanForUnknownSkillCards()
     elseif (msg == "menu") then
