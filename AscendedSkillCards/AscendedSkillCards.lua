@@ -177,38 +177,63 @@ local function SetButtonTooltipText(btn, tooltipIndex)
   end)
 end
 
-local ScanForUnknownSkillCards
+local function DisplayErrorMessage(errorMessage)
+  if (not errorMessage) then return end
+  UIErrorsFrame:AddMessage(errorMessage, 1, 0, 0, 1, 1);
+end
 
-local function UpgradeCards()
+local function ExchangeCards(operationIndex)
+  if (not operationIndex) then return end
   ScanForUnknownSkillCards()
-  if (totalCards < 10) then return end
-  UIErrorsFrame:AddMessage("You don't have enough cards to upgrade", 1, 0, 0, 1, 1);
   local gossipFrameDialogueOptionIndex = nil
-  if (uncommonCards + commonCards > 9) then
-    gossipFrameDialogueOptionIndex = 2
-  elseif (rareCards > 9) then
-    gossipFrameDialogueOptionIndex = 3
+
+  -- Upgrade cards to next rarity
+  if (operationIndex == 1) then
+    if (totalCards < 10) then
+      DisplayErrorMessage("You don't have engouh cards to upgrade")
+      return
+    end
+    if (uncommonCards + commonCards > 9) then
+      gossipFrameDialogueOptionIndex = 2
+    elseif (rareCards > 9) then
+      gossipFrameDialogueOptionIndex = 3
+    end
+
+  elseif operationIndex == 2 then
+    if (totalCards < 5) then
+      DisplayErrorMessage("You don't have enough cards to exchange")
+      return
+    end
+    gossipFrameDialogueOptionIndex = 1
   end
+  -- if not set by this point, exit.
   if (gossipFrameDialogueOptionIndex == nil) then return end
+
   _G["GossipTitleButton" .. gossipFrameDialogueOptionIndex]:Click()
   _G["StaticPopup1Button1"]:Click()
 end
 
-local function ExchangeCards()
-
-end
-
 local function CreateGossipFrameInteractionButtons()
-  DebugPrint("Create button!")
-  upgradeCardsTooltipData[1].button = CreateFrame("Button", "UpgradeCardsButton", topSkillCardFrame,
+  -- convoluted way of keeping track of tooltip data index and card operation number
+  local cardOperationIndexNumber = 1
+  local btn = CreateFrame("Button", "UpgradeCardsButton", topSkillCardFrame,
     "UIPanelButtonTemplate")
-  local btn = upgradeCardsTooltipData[1].button
   btn:SetPoint("TOPRIGHT", -15, -35)
   btn:SetWidth(70)
   btn:SetHeight(30)
   btn:SetText("Upgrade")
-  btn:SetScript("OnClick", function(self, button) UpgradeCards() end)
-  SetButtonTooltipText(1)
+  btn:SetScript("OnClick", function(self, button) ExchangeCards(cardOperationIndexNumber) end)
+  SetButtonTooltipText(btn, cardOperationIndexNumber)
+  -- Exchange 5 random cards for sealed deck
+  cardOperationIndexNumber = 2
+  btn = CreateFrame("Button", "ExchangeCardsForSealedDeckButton", topSkillCardFrame,
+    "UIPanelButtonTemplate")
+  btn:SetPoint("TOPRIGHT", -15, -65)
+  btn:SetWidth(70)
+  btn:SetHeight(30)
+  btn:SetText("Exchange")
+  btn:SetScript("OnClick", function(self, button) ExchangeCards(cardOperationIndexNumber) end)
+  SetButtonTooltipText(btn, cardOperationIndexNumber)
 end
 
 local function SetupGUI()
