@@ -214,26 +214,23 @@ local function ExchangeCards(operationIndex)
 end
 
 local function CreateGossipFrameInteractionButtons()
-  -- convoluted way of keeping track of tooltip data index and card operation number
-  local cardOperationIndexNumber = 1
   local btn = CreateFrame("Button", "UpgradeCardsButton", topSkillCardFrame,
     "UIPanelButtonTemplate")
   btn:SetPoint("TOPRIGHT", -15, -35)
   btn:SetWidth(70)
   btn:SetHeight(30)
   btn:SetText("Upgrade")
-  btn:SetScript("OnClick", function(self, button) ExchangeCards(cardOperationIndexNumber) end)
-  SetButtonTooltipText(btn, cardOperationIndexNumber)
+  btn:SetScript("OnClick", function(self, button) ExchangeCards(1) end)
+  SetButtonTooltipText(btn, 1)
   -- Exchange 5 random cards for sealed deck
-  cardOperationIndexNumber = 2
   btn = CreateFrame("Button", "ExchangeCardsForSealedDeckButton", topSkillCardFrame,
     "UIPanelButtonTemplate")
   btn:SetPoint("TOPRIGHT", -15, -65)
   btn:SetWidth(70)
   btn:SetHeight(30)
   btn:SetText("Exchange")
-  btn:SetScript("OnClick", function(self, button) ExchangeCards(cardOperationIndexNumber) end)
-  SetButtonTooltipText(btn, cardOperationIndexNumber)
+  btn:SetScript("OnClick", function(self, button) ExchangeCards(2) end)
+  SetButtonTooltipText(btn, 2)
 end
 
 local function SetupGUI()
