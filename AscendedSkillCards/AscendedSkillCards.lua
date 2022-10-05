@@ -112,11 +112,11 @@ function ASC:DisableAddon()
   topSkillCardFrame:Hide()
 end
 
-function ASC:ToggleAutoShow()
+function ToggleAutoShow()
   AscendedSkillCardsDB.AutoShow = not AscendedSkillCardsDB.AutoShow
 end
 
-function ASC:ToggleTooltips()
+function ToggleTooltips()
   AscendedSkillCardsDB.EnableTooltips = not AscendedSkillCardsDB.EnableTooltips
 end
 
@@ -133,7 +133,7 @@ local function CreateAndShowOptionsMenu()
       tooltipOnButton = true,
       checked = AscendedSkillCardsDB.AutoShow,
       tooltipText = "Show window automatically when opening a sealed card",
-      func = ASC.ToggleAutoShow
+      func = ToggleAutoShow
     },
     {
       text = "Show tooltips",
@@ -142,7 +142,7 @@ local function CreateAndShowOptionsMenu()
       tooltipOnButton = true,
       checked = AscendedSkillCardsDB.EnableTooltips,
       tooltipText = "Enable button tooltips",
-      func = ASC.ToggleTooltips
+      func = ToggleTooltips
     }
   }
   EasyMenu(menu, skillCardFrameOptionsMenu, skillCardFrameOptionsButton, 0, 103, "MENU")
@@ -169,16 +169,20 @@ local ScanForUnknownSkillCards
 local function UpgradeCards()
   ScanForUnknownSkillCards()
   if (totalCards < 10) then return end
-  local index = nil
+  UIErrorsFrame:AddMessage("You don't have enough cards to upgrade", 1, 0, 0, 1, 1);
+  local gossipFrameDialogueOptionIndex = nil
   if (uncommonCards + commonCards > 9) then
-    index = 2
+    gossipFrameDialogueOptionIndex = 2
   elseif (rareCards > 9) then
-    index = 3
+    gossipFrameDialogueOptionIndex = 3
   end
-  if (index == nil) then return end
-  print("Index: " .. tostring(index))
-  _G["GossipTitleButton" .. index]:Click()
+  if (gossipFrameDialogueOptionIndex == nil) then return end
+  _G["GossipTitleButton" .. gossipFrameDialogueOptionIndex]:Click()
   _G["StaticPopup1Button1"]:Click()
+end
+
+local function ExchangeCards()
+
 end
 
 local function CreateGossipFrameInteractionButtons()
