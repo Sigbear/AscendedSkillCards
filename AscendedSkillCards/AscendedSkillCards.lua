@@ -79,16 +79,6 @@ if not AscendedSkillCardsDB then
   }
 end
 
-local function pt(table)
-  if (table == nil) then
-    print("table argument was nil")
-    return
-  end
-  for key, value in pairs(table) do
-    print(key, value)
-  end
-end
-
 local function DebugPrint(string)
   if (AscendedSkillCardsDB.isDebugging) then print(string) end
 end
