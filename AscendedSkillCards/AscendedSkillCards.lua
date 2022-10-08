@@ -186,11 +186,12 @@ end
 
 local function ExchangeCards(operationIndex)
   if (not operationIndex) then return end
+  ScanForUnknownSkillCards()
   if (not AscendedSkillCardsDB.ForceUpgradeCards and unknownCards ~= 0) then
     DisplayErrorMessage("You have unlearned skill cards in inventory.")
     return
   end
-  ScanForUnknownSkillCards()
+
   local gossipFrameDialogueOptionIndex = nil
 
   -- Upgrade cards to next rarity
@@ -205,6 +206,7 @@ local function ExchangeCards(operationIndex)
       gossipFrameDialogueOptionIndex = 3
     end
 
+  -- exchange 5 cards for sealed decks
   elseif operationIndex == 2 then
     if (totalCards < 5) then
       DisplayErrorMessage("You don't have enough cards for an exchange")
