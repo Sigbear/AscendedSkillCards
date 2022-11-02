@@ -356,10 +356,10 @@ ScanForUnknownSkillCards = function()
 
             -- check if skillcard is unknown
             local skillCardId = GetContainerItemID(bag, slot)
-            local skillCard = VANITY_ITEMS[skillCardId]
-            if (skillCard == nil) then
-              print("Could not find info about skill card. Please try opening the VANITY collection tab to refresh the information")
-            elseif (skillCard.known == false) then
+            local isSkillCardKnown = IsCollectionItemOwned(skillCardId)
+            if (isSkillCardKnown == nil) then
+              print("AscendedSkillCards: Could not find info about skill card. Please try opening the VANITY collection tab to refresh the information")
+            elseif (isSkillCardKnown == false) then
               unknownSkillCards[skillCardId] = bag .. " " .. slot
               unknownCards = unknownCards + 1
             end
