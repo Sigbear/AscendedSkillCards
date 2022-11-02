@@ -13,23 +13,25 @@ local skillCardFrameOptionsButton = CreateFrame("Button", "skillCardFrameOptions
 local unknownSkillCardsInInvTitleText = nil
 local menuTexts = {
   UnknownCardsInInv = "Unknown skill cards in inv",
-  NoUnknownCardsInInv = "No unknown cards found"
+  NoUnknownCardsInInv = "No unknown cards found",
+  NormalCardCounterTextPrefix = "Normal cards: ",
+  LuckySkillCardsCounterPrefix = "Lucky cards: "
 }
 
 -- Gossip frame interaction buttons Tooltip
-local upgradeCardsButtonTooltip = CreateFrame("GameTooltip", "GossipFrameInteractionTooltip", UIParent,
+local exchangeCardsButtonTooltip = CreateFrame("GameTooltip", "GossipFrameInteractionTooltip", UIParent,
   "GameTooltipTemplate")
 local exchangeCardsTooltipData =
 {
   {
-    header = "Upgrade",
-    text = "Upgrades skill cards to the next rarity in the order of lowest to highest.",
+    header = "Exchange 5 normal skill cards",
+    text = "Exchange 5 random normal skill cards for sealed decks.",
     warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
     "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
   },
   {
-    header = "Exchange",
-    text = "Exchange 5 random cards for sealed decks.",
+    header = "Exchange 5 lucky skill cards",
+    text = "Exchange 5 random lucky skill cards for sealed decks.",
     warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
     "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
   }
@@ -40,14 +42,12 @@ local skillCardFrameOptionsMenu = CreateFrame("Frame", "skillCardOptionsMenu", s
   "UIDropDownMenuTemplate")
 
 local firstTimeLoadingMenu = true
-local defaultSkillCardFrameHeight = 170
+local defaultSkillCardFrameHeight = 200
 local skillCardButtonsPerRow = 6
 
 -- skill card counter texts
-local commonCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
-local uncommonCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
-local rareCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
-local epicCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
+local normalSkillCardCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
+local luckySkillCardCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
 
 local testCards = { [0] = 1405118, 1412042, 1444425, 1431821, 1431935, 1434074, 1180493 }
 local testCardIndex = 0
@@ -55,9 +55,8 @@ local testCardIndex = 0
 -- unknown skill card "bag slot"
 local unknownSkillCards = {}
 local unknownCards = 0
-local commonCards = 0
-local uncommonCards = 0
-local rareCards = 0
+local normalSkillCards = 0
+local luckySkillCards = 0
 local totalCards = 0
 
 -- reuse card frames
@@ -163,7 +162,7 @@ end
 
 local function SetButtonTooltipText(btn, tooltipIndex)
   local tooltipData = exchangeCardsTooltipData[tooltipIndex]
-  local tooltip = upgradeCardsButtonTooltip
+  local tooltip = exchangeCardsButtonTooltip
   btn:SetScript("OnEnter", function(self, event, ...)
     if (AscendedSkillCardsDB.EnableTooltips) then
       tooltip:SetOwner(topSkillCardFrame, "ANCHOR_TOPRIGHT")
@@ -188,56 +187,38 @@ local function ExchangeCards(operationIndex)
   if (not operationIndex) then return end
   ScanForUnknownSkillCards()
   if (not AscendedSkillCardsDB.ForceUpgradeCards and unknownCards ~= 0) then
-    DisplayErrorMessage("You have unlearned skill cards in inventory.")
+    DisplayErrorMessage("You have unlearned skill cards in inventory")
+    return
+  end
+  if (totalCards < 5) then
+    DisplayErrorMessage("You don't have enough cards for an exchange")
     return
   end
 
-  local gossipFrameDialogueOptionIndex = nil
-
-  -- Upgrade cards to next rarity
   if (operationIndex == 1) then
-    if (totalCards < 10) then
-      DisplayErrorMessage("You don't have enough cards for an upgrade")
-      return
-    end
-    if (uncommonCards + commonCards > 9) then
-      gossipFrameDialogueOptionIndex = 2
-    elseif (rareCards > 9) then
-      gossipFrameDialogueOptionIndex = 3
-    end
-
-  -- exchange 5 cards for sealed decks
-  elseif operationIndex == 2 then
-    if (totalCards < 5) then
-      DisplayErrorMessage("You don't have enough cards for an exchange")
-      return
-    end
-    gossipFrameDialogueOptionIndex = 1
+    SkillCardExchangeUI.content.exchange.buttonNormal:Click()
+  elseif(operationIndex == 2)then
+    SkillCardExchangeUI.content.exchange.buttonNormalLucky:Click()
   end
-  -- if not set by this point, exit.
-  if (gossipFrameDialogueOptionIndex == nil) then return end
-
-  DebugPrint("GossipFrameIndex: " .. gossipFrameDialogueOptionIndex)
-  _G["GossipTitleButton" .. gossipFrameDialogueOptionIndex]:Click()
-  _G["StaticPopup1Button1"]:Click()
+ StaticPopup1Button1:Click()
 end
 
 local function CreateGossipFrameInteractionButtons()
-  local btn = CreateFrame("Button", "UpgradeCardsButton", topSkillCardFrame,
+  local btn = CreateFrame("Button", "exchangeNormalCardsButton", topSkillCardFrame,
     "UIPanelButtonTemplate")
-  btn:SetPoint("TOPRIGHT", -15, -35)
-  btn:SetWidth(70)
+  btn:SetPoint("TOPRIGHT", -15, -75)
+  btn:SetWidth(175)
   btn:SetHeight(30)
-  btn:SetText("Upgrade")
+  btn:SetText("Exchange Normal Cards")
   btn:SetScript("OnClick", function(self, button) ExchangeCards(1) end)
   SetButtonTooltipText(btn, 1)
   -- Exchange 5 random cards for sealed deck
-  btn = CreateFrame("Button", "ExchangeCardsForSealedDeckButton", topSkillCardFrame,
+  btn = CreateFrame("Button", "ExchangeLuckyCardsButton", topSkillCardFrame,
     "UIPanelButtonTemplate")
-  btn:SetPoint("TOPRIGHT", -15, -65)
-  btn:SetWidth(70)
+  btn:SetPoint("TOPRIGHT", -15 , -105)
+  btn:SetWidth(175)
   btn:SetHeight(30)
-  btn:SetText("Exchange")
+  btn:SetText("Exchange Lucky Cards")
   btn:SetScript("OnClick", function(self, button) ExchangeCards(2) end)
   SetButtonTooltipText(btn, 2)
 end
@@ -261,20 +242,16 @@ local function SetupGUI()
   CreateText(topSkillCardFrame, "Skill cards in inv", 0, -10, true)
 
   -- counters
-  commonCounterText:SetPoint("TOPLEFT", 15, -35)
-  uncommonCounterText:SetPoint("TOPLEFT", 15, -50)
-  rareCounterText:SetPoint("TOPLEFT", 15, -65)
-  epicCounterText:SetPoint("TOPLEFT", 15, -80)
-  commonCounterText:SetText("|cffffffffCommon|r:")
-  uncommonCounterText:SetText("|cff1eff00Uncommon|r:")
-  rareCounterText:SetText("|cff0070ddRare|r: ")
-  epicCounterText:SetText("|cffa335eeEpic|r: ")
+  normalSkillCardCounterText:SetPoint("TOPLEFT", 15, -35)
+  luckySkillCardCounterText:SetPoint("TOPLEFT", 15, -50)
+  normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix)
+  luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix)
 
   -- upgrade btns
   CreateGossipFrameInteractionButtons()
 
   -- unknown cards
-  unknownSkillCardsInInvTitleText = CreateText(topSkillCardFrame, menuTexts.NoUnknownCardsInInv, 0, -110, true)
+  unknownSkillCardsInInvTitleText = CreateText(topSkillCardFrame, menuTexts.NoUnknownCardsInInv, 0, -140, true)
 
   -- drag and drop functionality
   topSkillCardFrame:SetScript(
@@ -315,13 +292,13 @@ ScanForUnknownSkillCards = function()
 
   table.wipe(unknownSkillCards)
 
-  commonCards = 0
-  uncommonCards = 0
-  rareCards = 0
-  local epicCards = 0
+  normalSkillCards = 0
+  luckySkillCards = 0
   unknownCards = 0
   totalCards = 0
 
+  -- TODO: test this later.
+  -- C_ContentLoader:Load("SkillCardData")
   if (alreadyOpenedVanityTab == false) then
     Collections:Show()
     StoreCollectionFrame:Show()
@@ -329,33 +306,29 @@ ScanForUnknownSkillCards = function()
     alreadyOpenedVanityTab = true
   end
 
-  for bag = 0, 4 do
+  for bag = 0, NUM_BAG_SLOTS do
     for slot = 1, GetContainerNumSlots(bag) do
       local link = GetContainerItemLink(bag, slot)
       if link then
         local itemInfo = { GetItemInfo(link) }
         local itemName = itemInfo[1]
-        local itemQuality = itemInfo[3]
         local itemCount = GetItemCount(link, false, false, false)
+        local skillCardId = GetContainerItemID(bag, slot)
+
         -- name can be nil when logging in the first time.
         if (itemName == nil) then break else
-
           local itemIsSkillCard, itemIsGoldenSkillCard = CheckStringForSkillCard(itemName)
           if (itemIsSkillCard and not itemIsGoldenSkillCard) then
-            -- rarity counter
             totalCards = totalCards + itemCount
-            if (itemQuality == 1) then
-              commonCards = commonCards + itemCount
-            elseif (itemQuality == 2) then
-              uncommonCards = uncommonCards + itemCount
-            elseif (itemQuality == 3) then
-              rareCards = rareCards + itemCount
-            elseif (itemQuality == 4) then
-              epicCards = epicCards + itemCount
+
+            if (GetSkillCard(skillCardId)) then
+              normalSkillCards = normalSkillCards + itemCount
+            end
+            if (GetLuckyCard(skillCardId)) then
+              luckySkillCards = luckySkillCards + itemCount
             end
 
             -- check if skillcard is unknown
-            local skillCardId = GetContainerItemID(bag, slot)
             local isSkillCardKnown = IsCollectionItemOwned(skillCardId)
             if (isSkillCardKnown == nil) then
               print("AscendedSkillCards: Could not find info about skill card. Please try opening the VANITY collection tab to refresh the information")
@@ -369,10 +342,8 @@ ScanForUnknownSkillCards = function()
     end
   end
 
-  commonCounterText:SetText("|cffffffffCommon|r: " .. commonCards)
-  uncommonCounterText:SetText("|cff1eff00Uncommon|r: " .. uncommonCards)
-  rareCounterText:SetText("|cff0070ddRare|r: " .. rareCards)
-  epicCounterText:SetText("|cffa335eeEpic|r: " .. epicCards)
+  normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix .. normalSkillCards)
+  luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix .. luckySkillCards)
 end
 
 function ASC:EnableAddon()
@@ -464,7 +435,7 @@ local function ShowAllButtonFrames()
     for _, buttonFrame in pairs(buttonFramePool) do
       if (unknownSkillCards[buttonFrame.skillCardId] ~= nil) then
         local xOffset = 4 + column * buttonWidth
-        local yOffset = (135 + row * buttonHeight) * -1
+        local yOffset = (165 + row * buttonHeight) * -1
         buttonFrame:SetPoint("TOPLEFT", xOffset, yOffset)
         column = column + 1
         if (column > 5) then
