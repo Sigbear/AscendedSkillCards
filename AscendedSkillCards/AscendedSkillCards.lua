@@ -478,7 +478,7 @@ local function ShowAllButtonFrames()
     end
   end
   topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight +
-    (math.ceil(unknownCards / skillCardButtonsPerRow) - 1) * buttonHeight)
+    math.max(0, (math.ceil(unknownCards / skillCardButtonsPerRow) - 1) * buttonHeight))
 end
 
 function ASC:BAG_UPDATE(_, bagID)
@@ -523,10 +523,10 @@ function ASC:SlashCommand(msg)
     end
   elseif (msg == "reset") then
     topSkillCardFrame:SetPoint("CENTER", 0, 0)
-    print("Skillcard frame postion reset.")
+    print("AscendedSkillCards: Skillcard frame postion reset.")
   elseif (msg == "debug") then
     AscendedSkillCardsDB.isDebugging = not AscendedSkillCardsDB.isDebugging
-    print("Debug is: " .. tostring(AscendedSkillCardsDB.isDebugging))
+    print("AscendedSkillCards: Debug is: " .. tostring(AscendedSkillCardsDB.isDebugging))
   elseif (AscendedSkillCardsDB.isDebugging) then
     if (msg == "scan") then
       ScanForUnknownSkillCards()
@@ -555,7 +555,7 @@ function ASC:SlashCommand(msg)
       end
       DebugPrint("cards/max:" .. tostring(math.ceil(testUnknownCards / skillCardButtonsPerRow)))
       topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight +
-        (math.ceil(testUnknownCards / skillCardButtonsPerRow) - 1) * buttonHeight)
+        math.max(0, (math.ceil(testUnknownCards / skillCardButtonsPerRow) - 1) * buttonHeight))
     end
   end
 end
