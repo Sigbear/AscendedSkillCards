@@ -74,7 +74,7 @@ if not AscendedSkillCardsDB then
     AutoShow = true,
     EnableTooltips = true,
     isDebugging = false,
-    ForceUpgradeCards = false
+    ForceExchangeCards = false
   }
 end
 
@@ -119,8 +119,8 @@ function ToggleTooltips()
   AscendedSkillCardsDB.EnableTooltips = not AscendedSkillCardsDB.EnableTooltips
 end
 
-function ToggleForceUpgradeCards()
-  AscendedSkillCardsDB.ForceUpgradeCards = not AscendedSkillCardsDB.ForceUpgradeCards
+function ToggleForceExchangeCards()
+  AscendedSkillCardsDB.ForceExchangeCards = not AscendedSkillCardsDB.ForceExchangeCards
 end
 
 local function CreateAndShowOptionsMenu()
@@ -148,13 +148,13 @@ local function CreateAndShowOptionsMenu()
       func = ToggleTooltips
     },
     {
-      text = "Force Upgrade",
+      text = "Force exchange",
       keepShownOnClick = true,
-      tooltipTitle = "Force Upgrade",
+      tooltipTitle = "Force exchange",
       tooltipOnButton = true,
-      checked = AscendedSkillCardsDB.ForceUpgradeCards,
-      tooltipText = "Upgrade even if you have unlearned skill cards in inventory",
-      func = ToggleForceUpgradeCards
+      checked = AscendedSkillCardsDB.ForceExchangeCards,
+      tooltipText = "Exchange cards even if you have unlearned skill cards in inventory",
+      func = ToggleForceExchangeCards
     }
   }
   EasyMenu(menu, skillCardFrameOptionsMenu, skillCardFrameOptionsButton, 0, 119, "MENU")
@@ -186,7 +186,7 @@ end
 local function ExchangeCards(operationIndex)
   if (not operationIndex) then return end
   ScanForUnknownSkillCards()
-  if (not AscendedSkillCardsDB.ForceUpgradeCards and unknownCards ~= 0) then
+  if (not AscendedSkillCardsDB.ForceExchangeCards and unknownCards ~= 0) then
     DisplayErrorMessage("You have unlearned skill cards in inventory")
     return
   end
