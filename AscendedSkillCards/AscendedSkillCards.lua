@@ -196,8 +196,16 @@ local function ExchangeCards(operationIndex)
   end
 
   if (operationIndex == 1) then
+    if (normalSkillCards < 5) then
+      DisplayErrorMessage("You don't have enough normal cards for an exchange")
+      return
+    end
     SkillCardExchangeUI.content.exchange.buttonNormal:Click()
   elseif(operationIndex == 2)then
+    if (luckySkillCards < 5) then
+      DisplayErrorMessage("You don't have enough lucky cards for an exchange")
+      return
+    end
     SkillCardExchangeUI.content.exchange.buttonNormalLucky:Click()
   end
  StaticPopup1Button1:Click()
