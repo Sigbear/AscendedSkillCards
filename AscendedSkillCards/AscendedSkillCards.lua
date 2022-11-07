@@ -6,6 +6,8 @@ local ScanForUnknownSkillCards
 -- GUI
 local topSkillCardFrame = CreateFrame("Frame", "SkillCardContainerFrame", UIParent, "GameTooltipTemplate")
 topSkillCardFrame:SetFrameStrata("DIALOG")
+topSkillCardFrame:SetMovable(true)
+
 local closeSkillCardFrameButton = CreateFrame("Button", "skillCardFrameCloseButton", topSkillCardFrame,
   "UIPanelCloseButton")
 local skillCardFrameOptionsButton = CreateFrame("Button", "skillCardFrameOptionsButton", topSkillCardFrame)
@@ -234,7 +236,6 @@ end
 local function SetupGUI()
 
   -- top container
-  topSkillCardFrame:SetMovable(true)
   topSkillCardFrame:EnableMouse(true)
   topSkillCardFrame:SetWidth(200)
   topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight)
