@@ -4,9 +4,10 @@ local ASC = LibStub("AceAddon-3.0"):NewAddon("AscendedSkillCards", "AceEvent-3.0
 local ScanForUnknownSkillCards
 
 -- GUI
-local topSkillCardFrame = CreateFrame("Frame", "SkillCardContainerFrame", UIParent, "GameTooltipTemplate")
+topSkillCardFrame = CreateFrame("Frame", "AscendedSkillCardsContainerFrame", UIParent, "GameTooltipTemplate")
 topSkillCardFrame:SetFrameStrata("DIALOG")
 topSkillCardFrame:SetMovable(true)
+-- topSkillCardFrame:SetUserPlaced(true)
 
 local closeSkillCardFrameButton = CreateFrame("Button", "skillCardFrameCloseButton", topSkillCardFrame,
   "UIPanelCloseButton")
@@ -288,7 +289,7 @@ local function SetupGUI()
   topSkillCardFrame:EnableMouse(true)
   topSkillCardFrame:SetWidth(200)
   topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight)
-  topSkillCardFrame:SetPoint("CENTER", 0, 0)
+  -- topSkillCardFrame:SetPoint("CENTER", 0, 0)
 
   -- close button
   closeSkillCardFrameButton:SetWidth(30)
