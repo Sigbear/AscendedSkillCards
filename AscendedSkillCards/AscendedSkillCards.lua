@@ -36,6 +36,18 @@ local exchangeCardsTooltipData =
     text = "Exchange 5 random lucky skill cards for sealed decks.",
     warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
     "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
+  },
+  {
+    header = "Exchange 5 golden skill cards",
+    text = "Exchange 5 random golden skill cards for golden sealed decks.",
+    warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
+    "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
+  },
+  {
+    header = "Exchange 5 golden lucky skill cards",
+    text = "Exchange 5 random golden lucky skill cards for sealed decks.",
+    warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
+    "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
   }
 }
 
@@ -50,6 +62,8 @@ local skillCardButtonsPerRow = 6
 -- skill card counter texts
 local normalSkillCardCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
 local luckySkillCardCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
+local goldenNormalSkillCardCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
+local goldenluckySkillCardCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
 
 local testCards = { [0] = 1405118, 1412042, 1444425, 1431821, 1431935, 1434074, 1180493 }
 local testCardIndex = 0
@@ -59,6 +73,8 @@ local unknownSkillCards = {}
 local unknownCards = 0
 local normalSkillCards = 0
 local luckySkillCards = 0
+local goldenSkillCards = 0
+local luckyGoldenSkillCards = 0
 local totalCards = 0
 
 -- reuse card frames
@@ -73,10 +89,13 @@ local alreadyOpenedVanityTab = false
 -- settings
 if not AscendedSkillCardsDB then
   AscendedSkillCardsDB = {
-    AutoShow = true,
     EnableTooltips = true,
     isDebugging = false,
-    ForceExchangeCards = false
+    ForceExchangeCards = false,
+    ShowOnOpeningSealedDeck = true,
+    ShowOnOpeningExchangeWindow = true,
+    HideOnClosingExchangeWindow = true,
+    EnableGoldenSkillCards = true,
   }
 end
 
@@ -109,20 +128,16 @@ local function CreateText(self, text, xOffset, yOffset, underlined)
   return fontString
 end
 
-function ASC:DisableAddon()
+function ASC:DisableAddon(settingGuard)
+  if (settingGuard ~= nil) then DebugPrint("DisableAddon passed arg: " .. settingGuard) end
+  if (settingGuard ~= nil and AscendedSkillCardsDB[settingGuard] == false) then return end
   topSkillCardFrame:Hide()
 end
 
-function ToggleAutoShow()
-  AscendedSkillCardsDB.AutoShow = not AscendedSkillCardsDB.AutoShow
-end
-
-function ToggleTooltips()
-  AscendedSkillCardsDB.EnableTooltips = not AscendedSkillCardsDB.EnableTooltips
-end
-
-function ToggleForceExchangeCards()
-  AscendedSkillCardsDB.ForceExchangeCards = not AscendedSkillCardsDB.ForceExchangeCards
+local function ToggleSetting(nameOfSetting)
+  if(nameOfSetting == "" or nil) then DebugPrint("Setting could not be toggled. Bad input") return end
+  if (AscendedSkillCardsDB[nameOfSetting] == nil) then DebugPrint("Setting: " .. nameOfSetting .. " did not exist in DB. Aborting toggle.") return end
+  AscendedSkillCardsDB[nameOfSetting] = not AscendedSkillCardsDB[nameOfSetting]
 end
 
 local function CreateAndShowOptionsMenu()
@@ -132,13 +147,46 @@ local function CreateAndShowOptionsMenu()
       isTitle = true
     },
     {
-      text = "Auto show",
-      keepShownOnClick = true,
-      tooltipTitle = "Auto show",
-      tooltipOnButton = true,
-      checked = AscendedSkillCardsDB.AutoShow,
-      tooltipText = "Show window automatically when opening a sealed card",
-      func = ToggleAutoShow
+      text = "Show/hide",
+      hasArrow = true,
+      menuList =
+      {
+        {
+          text = "Show when",
+          isTitle = true
+        },
+        {
+          text = "Opening sealed deck",
+          keepShownOnClick = true,
+          tooltipTitle = "Auto show when opening a sealed deck",
+          tooltipOnButton = true,
+          checked = AscendedSkillCardsDB.ShowOnOpeningSealedDeck,
+          tooltipText = "Show window automatically when opening a sealed deck",
+          func = function() ToggleSetting("ShowOnOpeningSealedDeck") end
+        },
+        {
+          text = "Opening exchange window",
+          keepShownOnClick = true,
+          tooltipTitle = "Show on opening exchange gui",
+          tooltipOnButton = true,
+          checked = AscendedSkillCardsDB.ShowOnOpeningExchangeWindow,
+          tooltipText = "Show window when opening exchange card vendor window",
+          func = function() ToggleSetting("ShowOnOpeningExchangeWindow") end
+        },
+        {
+          text = "Hide when",
+          isTitle = true
+        },
+        {
+          text = "Closing exchange window",
+          keepShownOnClick = true,
+          tooltipTitle = "closing exchange gui",
+          tooltipOnButton = true,
+          checked = AscendedSkillCardsDB.HideOnClosingExchangeWindow,
+          tooltipText = "Hide window when closing the exchange card vendor window",
+          func = function() ToggleSetting("HideOnClosingExchangeWindow") end
+        }
+      }
     },
     {
       text = "Show tooltips",
@@ -147,7 +195,7 @@ local function CreateAndShowOptionsMenu()
       tooltipOnButton = true,
       checked = AscendedSkillCardsDB.EnableTooltips,
       tooltipText = "Enable button tooltips",
-      func = ToggleTooltips
+      func = function() ToggleSetting("EnableTooltips") end
     },
     {
       text = "Force exchange",
@@ -156,7 +204,7 @@ local function CreateAndShowOptionsMenu()
       tooltipOnButton = true,
       checked = AscendedSkillCardsDB.ForceExchangeCards,
       tooltipText = "Exchange cards even if you have unlearned skill cards in inventory",
-      func = ToggleForceExchangeCards
+      func = function() ToggleSetting("ForceExchangeCards") end
     }
   }
   EasyMenu(menu, skillCardFrameOptionsMenu, skillCardFrameOptionsButton, 0, 119, "MENU")
@@ -214,6 +262,7 @@ local function ExchangeCards(operationIndex)
 end
 
 local function CreateGossipFrameInteractionButtons()
+  -- Exchange 5 normal cards for sealed deck
   local btn = CreateFrame("Button", "exchangeNormalCardsButton", topSkillCardFrame,
     "UIPanelButtonTemplate")
   btn:SetPoint("TOPRIGHT", -15, -75)
@@ -222,7 +271,7 @@ local function CreateGossipFrameInteractionButtons()
   btn:SetText("Exchange Normal Cards")
   btn:SetScript("OnClick", function(self, button) ExchangeCards(1) end)
   SetButtonTooltipText(btn, 1)
-  -- Exchange 5 random cards for sealed deck
+  -- Exchange 5 lucky cards for sealed deck
   btn = CreateFrame("Button", "ExchangeLuckyCardsButton", topSkillCardFrame,
     "UIPanelButtonTemplate")
   btn:SetPoint("TOPRIGHT", -15 , -105)
@@ -355,7 +404,7 @@ ScanForUnknownSkillCards = function()
   luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix .. luckySkillCards)
 end
 
-function ASC:EnableAddon()
+function ASC:EnableAddon(settingGuard)
   if (firstTimeLoadingMenu) then
     DebugPrint("First call, setting up GUI")
     -- make frame closable with esc // this makes the frame close when learning a card :(
@@ -365,6 +414,9 @@ function ASC:EnableAddon()
     ScanForUnknownSkillCards()
     firstTimeLoadingMenu = false
   end
+  -- check optional settings flag.
+  if (settingGuard ~= nil) then DebugPrint("EnableAddon passed arg: " .. settingGuard) end
+  if (settingGuard ~= nil and AscendedSkillCardsDB[settingGuard] == false) then return end
   topSkillCardFrame:Show()
 end
 
@@ -480,7 +532,7 @@ function ASC:BAG_UPDATE(_, bagID)
 end
 
 function ASC:CHAT_MSG_LOOT(_, ...)
-  if (AscendedSkillCardsDB.AutoShow) then
+  if (AscendedSkillCardsDB.ShowOnOpeningSealedDeck) then
     local lootText = select(1, ...)
     local isSkillCard, isGoldenSkillCard = CheckStringForSkillCard(lootText)
     if (isSkillCard and not isGoldenSkillCard) then
@@ -543,7 +595,10 @@ end
 function ASC:OnInitialize()
   self:RegisterChatCommand("asc", "SlashCommand")
 
-  -- always register to these for now.
   self:RegisterEvent("BAG_UPDATE")
   self:RegisterEvent("CHAT_MSG_LOOT")
+
+  -- Hook skill card exchange frame to show and hide automaticaly on interaction. (Thanks for the tip Anch)
+  SkillCardExchangeUI:HookScript("OnShow", function() ASC:EnableAddon("ShowOnOpeningExchangeWindow") end)
+  SkillCardExchangeUI:HookScript("OnHide", function() ASC:DisableAddon("HideOnClosingExchangeWindow") end)
 end
