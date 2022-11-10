@@ -639,8 +639,9 @@ end
 
 function ASC:BAG_UPDATE(_, bagID)
   local oldUknownCards = unknownCards
+  local oldGoldenUknownCards = unknownGoldenskillCards
   ScanForUnknownSkillCards()
-  if (bagID >= 0 and oldUknownCards ~= unknownCards) then
+  if (bagID >= 0 and (oldUknownCards ~= unknownCards or oldGoldenUknownCards ~= unknownGoldenskillCards)) then
     HideAllButtonFrames()
     AddOrReuseButtonFrames()
     ResizeWindowAndShowButtonFrames()
