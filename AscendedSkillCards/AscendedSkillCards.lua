@@ -186,7 +186,7 @@ local function CreateAndShowOptionsMenu()
           tooltipOnButton = true,
           checked = AscendedSkillCardsDB.ShowOnOpeningSealedDeck,
           tooltipText = "Show window automatically when opening a sealed deck",
-          func = function() ToggleSetting("ShowOnOpeningSealedDeck") end
+          func = function() ToggleSetting("ShowOnOpeningSealedDeck", true) end
         },
         {
           text = "Opening exchange window",
@@ -195,7 +195,7 @@ local function CreateAndShowOptionsMenu()
           tooltipOnButton = true,
           checked = AscendedSkillCardsDB.ShowOnOpeningExchangeWindow,
           tooltipText = "Show window when opening exchange card vendor window",
-          func = function() ToggleSetting("ShowOnOpeningExchangeWindow") end
+          func = function() ToggleSetting("ShowOnOpeningExchangeWindow", true) end
         },
         {
           text = "Hide when",
@@ -208,7 +208,7 @@ local function CreateAndShowOptionsMenu()
           tooltipOnButton = true,
           checked = AscendedSkillCardsDB.HideOnClosingExchangeWindow,
           tooltipText = "Hide window when closing the exchange card vendor window",
-          func = function() ToggleSetting("HideOnClosingExchangeWindow") end
+          func = function() ToggleSetting("HideOnClosingExchangeWindow", true) end
         }
       }
     },
@@ -219,7 +219,7 @@ local function CreateAndShowOptionsMenu()
       tooltipOnButton = true,
       checked = AscendedSkillCardsDB.EnableTooltips,
       tooltipText = "Enable button tooltips",
-      func = function() ToggleSetting("EnableTooltips") end
+      func = function() ToggleSetting("EnableTooltips", true) end
     },
     {
       text = "Force exchange",
@@ -233,7 +233,7 @@ local function CreateAndShowOptionsMenu()
           tooltipOnButton = true,
           checked = AscendedSkillCardsDB.ForceExchangeCards,
           tooltipText = "Exchange cards even if you have unlearned skill cards in inventory",
-          func = function() ToggleSetting("ForceExchangeCards") end
+          func = function() ToggleSetting("ForceExchangeCards", false) end
         },
         {
           text = "Golden cards",
@@ -242,7 +242,7 @@ local function CreateAndShowOptionsMenu()
           tooltipOnButton = true,
           checked = AscendedSkillCardsDB.ForceExchangeGoldenCards,
           tooltipText = "Exchange golden cards even if you have unlearned golden skill cards in inventory",
-          func = function() ToggleSetting("ForceExchangeGoldenCards") end
+          func = function() ToggleSetting("ForceExchangeGoldenCards", false) end
         }
       }
     }
