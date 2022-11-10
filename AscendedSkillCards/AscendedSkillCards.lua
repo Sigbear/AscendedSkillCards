@@ -3,6 +3,9 @@ local ASC = LibStub("AceAddon-3.0"):NewAddon("AscendedSkillCards", "AceEvent-3.0
 -- forward declaration
 local ScanForUnknownSkillCards
 local AddGoldenColorToString
+local HideAllButtonFrames
+local AddOrReuseButtonFrames
+local ResizeWindowAndShowButtonFrames
 
 -- GUI
 topSkillCardFrame = CreateFrame("Frame", "AscendedSkillCardsContainerFrame", UIParent, "GameTooltipTemplate")
@@ -413,7 +416,6 @@ AddGoldenColorToString = function(string)
 end
 
 ScanForUnknownSkillCards = function()
-  DebugPrint("BEGIN ScanForUnknownSkillCards")
 
   BeginNewSession()
 
@@ -476,7 +478,6 @@ ScanForUnknownSkillCards = function()
 
   normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix .. normalSkillCards .. " / " .. AddGoldenColorToString(goldenSkillCards))
   luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix .. "  " .. luckySkillCards .. " / " .. AddGoldenColorToString(luckyGoldenSkillCards))
-  DebugPrint("END ScanForUnknownSkillCards")
 end
 
 function ASC:EnableAddon(settingGuard)
@@ -489,6 +490,9 @@ function ASC:EnableAddon(settingGuard)
     -- snap frame to middle first time.
     topSkillCardFrame:SetPoint("CENTER", 0, 0)
     ScanForUnknownSkillCards()
+    HideAllButtonFrames()
+    AddOrReuseButtonFrames()
+    ResizeWindowAndShowButtonFrames()
     firstTimeLoadingMenu = false
   end
   -- check optional settings flag.
@@ -549,14 +553,14 @@ local function AddOrReuseSkillCardButtonFrame(skillCardId, skillCardBagSlot, ite
   end
 end
 
-local function HideAllButtonFrames()
+HideAllButtonFrames = function()
   for _, buttonFrame in pairs(buttonFramePool) do
     buttonFrame.skillCardId = nil
     buttonFrame:Hide()
   end
 end
 
-local function AddOrReuseButtonFrames()
+AddOrReuseButtonFrames = function()
   local iterator = 0
   for skillCardId, bagSlot in pairs(unknownSkillCards) do
     if (iterator < 30) then
@@ -566,7 +570,7 @@ local function AddOrReuseButtonFrames()
   end
 end
 
-local function ShowAllButtonFrames()
+ResizeWindowAndShowButtonFrames = function()
   topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight)
   for _, _ in pairs(unknownSkillCards) do
     local row, column = 0, 0
@@ -597,7 +601,7 @@ function ASC:BAG_UPDATE(_, bagID)
   if (bagID >= 0 and oldUknownCards ~= unknownCards) then
     HideAllButtonFrames()
     AddOrReuseButtonFrames()
-    ShowAllButtonFrames()
+    ResizeWindowAndShowButtonFrames()
   end
 
   if (unknownSkillCardsInInvTitleText ~= nil) then
