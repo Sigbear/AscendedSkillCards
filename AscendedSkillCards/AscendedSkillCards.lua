@@ -73,6 +73,7 @@ local testCardIndex = 0
 local unknownSkillCards = {}
 local unknownCards = 0
 local unknownGoldenskillCards = 0
+local totalUnknownCards = 0
 local normalSkillCards = 0
 local luckySkillCards = 0
 local goldenSkillCards = 0
@@ -86,6 +87,7 @@ local function BeginNewSession()
 
   unknownCards = 0
   unknownGoldenskillCards = 0
+  totalUnknownCards = 0
   normalSkillCards = 0
   luckySkillCards = 0
   goldenSkillCards = 0
@@ -281,13 +283,23 @@ end
 --]]
 local function ExchangeCards(operationIndex)
   if (not operationIndex) then return end
+  DebugPrint("ExchangeCards passed arg: " .. tostring(operationIndex))
   ScanForUnknownSkillCards()
-  if (not AscendedSkillCardsDB.ForceExchangeCards and unknownCards ~= 0) then
+
+  -- if we have less than 5 cards total, skedaddle immediately.
+  if (totalCards < 5) then
+    DisplayErrorMessage("You don't have enough cards for an exchange")
+    return
+  end
+
+  -- normal cards check
+  if ((operationIndex == 1 or operationIndex == 2) and not AscendedSkillCardsDB.ForceExchangeCards and unknownCards ~= 0) then
     DisplayErrorMessage("You have unlearned skill cards in inventory")
     return
   end
-  if (totalCards < 5) then
-    DisplayErrorMessage("You don't have enough cards for an exchange")
+  -- golden cards check
+  if ((operationIndex == 3 or operationIndex == 4) and not AscendedSkillCardsDB.ForceExchangeGoldenCards and goldenSkillCards ~= 0) then
+    DisplayErrorMessage("You have unlearned golden skill cards in inventory")
     return
   end
 
@@ -304,9 +316,19 @@ local function ExchangeCards(operationIndex)
     end
     SkillCardExchangeUI.content.exchange.buttonNormalLucky:Click()
   elseif(operationIndex == 3) then
-    -- normal golden
+    if(goldenSkillCards < 5) then
+      DisplayErrorMessage("You don't have enough golden skill cards for an exchange")
+      return
+    end
+    DebugPrint("Normal golden clickity")
+    SkillCardExchangeUI.content.exchange.buttonGold:Click()
   elseif(operationIndex == 4) then
-    -- lucky golden
+    if (luckyGoldenSkillCards < 5) then
+      DisplayErrorMessage("You don't have enough golden lucky cards for an exchange")
+      return
+    end
+    DebugPrint("Lucky Golden clickity")
+    SkillCardExchangeUI.content.exchange.buttonGoldLucky:Click()
   end
  StaticPopup1Button1:Click()
 end
@@ -468,7 +490,12 @@ ScanForUnknownSkillCards = function()
               print("AscendedSkillCards: Could not find info about skill card. Please try opening the VANITY collection tab to refresh the information")
             elseif (isSkillCardKnown == false) then
               unknownSkillCards[skillCardId] = bag .. " " .. slot
-              unknownCards = unknownCards + 1
+              if (isLuckySkillCard and isLuckySkillCard.isGolden or isNormalSkillCard and isNormalSkillCard.isGolden) then
+                unknownGoldenskillCards = unknownGoldenskillCards + 1
+              else
+                unknownCards = unknownCards + 1
+              end
+
             end
           end
         end
@@ -591,8 +618,11 @@ ResizeWindowAndShowButtonFrames = function()
     end
   end
   DebugPrint("unknownCards before setHeight: " .. tostring(unknownCards))
+  DebugPrint("Unknown golden cards: " .. tostring(unknownGoldenskillCards))
+  totalUnknownCards = unknownCards + unknownGoldenskillCards
+  DebugPrint("Total unknown cards: " .. tostring(totalUnknownCards))
   topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight +
-    math.max(0, (math.ceil(unknownCards / skillCardButtonsPerRow) - 1) * buttonHeight))
+    math.max(0, (math.ceil(totalUnknownCards / skillCardButtonsPerRow) - 1) * buttonHeight))
 end
 
 function ASC:BAG_UPDATE(_, bagID)
