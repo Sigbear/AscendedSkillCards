@@ -2,11 +2,17 @@ local ASC = LibStub("AceAddon-3.0"):NewAddon("AscendedSkillCards", "AceEvent-3.0
 
 -- forward declaration
 local ScanForUnknownSkillCards
-local AddGoldenColorToString
+local ColorChatString
 local HideAllButtonFrames
 local AddOrReuseButtonFrames
 local ResizeWindowAndShowButtonFrames
 local UpdateSkillCardsInInventoryText
+
+local stringHexColors =
+{
+  White = "ffffff",
+  Gold = "e6cc80"
+}
 
 -- GUI
 topSkillCardFrame = CreateFrame("Frame", "AscendedSkillCardsContainerFrame", UIParent, "GameTooltipTemplate")
@@ -341,7 +347,7 @@ local function CreateGossipFrameInteractionButtons()
   btn:SetPoint("TOPLEFT", 15, -75)
   btn:SetWidth(85)
   btn:SetHeight(30)
-  btn:SetText("Normal")
+  btn:SetText(ColorChatString("Normal", stringHexColors.White))
   btn:SetScript("OnClick", function(self, button) ExchangeCards(1) end)
   SetButtonTooltipText(btn, 1)
   -- Exchange 5 lucky cards for sealed deck
@@ -350,7 +356,7 @@ local function CreateGossipFrameInteractionButtons()
   btn:SetPoint("TOPLEFT", 15, -105)
   btn:SetWidth(85)
   btn:SetHeight(30)
-  btn:SetText("Lucky")
+  btn:SetText(ColorChatString("Lucky", stringHexColors.White))
   btn:SetScript("OnClick", function(self, button) ExchangeCards(2) end)
   SetButtonTooltipText(btn, 2)
   local btn = CreateFrame("Button", "exchangeGoldenSkillCardsButton", topSkillCardFrame,
@@ -358,7 +364,7 @@ local function CreateGossipFrameInteractionButtons()
   btn:SetPoint("TOPRIGHT", -15, -75)
   btn:SetWidth(85)
   btn:SetHeight(30)
-  btn:SetText(AddGoldenColorToString("Normal"))
+  btn:SetText(ColorChatString("Normal", stringHexColors.Gold))
   btn:SetScript("OnClick", function(self, button) ExchangeCards(3) end)
   SetButtonTooltipText(btn, 3)
   local btn = CreateFrame("Button", "exchangeLuckyGoldenSkillCardsButton", topSkillCardFrame,
@@ -366,7 +372,7 @@ local function CreateGossipFrameInteractionButtons()
   btn:SetPoint("TOPRIGHT", -15, -105)
   btn:SetWidth(85)
   btn:SetHeight(30)
-  btn:SetText(AddGoldenColorToString("Lucky"))
+  btn:SetText(ColorChatString("Lucky", stringHexColors.Gold))
   btn:SetScript("OnClick", function(self, button) ExchangeCards(4) end)
   SetButtonTooltipText(btn, 4)
 end
@@ -385,7 +391,7 @@ local function SetupGUI()
   closeSkillCardFrameButton:SetScript("OnClick", ASC.DisableAddon)
 
   -- title
-  CreateText(topSkillCardFrame, "Normal/" .. AddGoldenColorToString("Golden") .. " cards", 0, -10, true)
+  CreateText(topSkillCardFrame, "Normal/" .. ColorChatString("Golden", stringHexColors.Gold) .. " cards", 0, -10, true)
 
   -- counters
   normalSkillCardCounterText:SetPoint("TOPLEFT", 25, -35)
@@ -434,8 +440,8 @@ local function SetupGUI()
   end)
 end
 
-AddGoldenColorToString = function(string)
-  return "|cffe6cc80" .. tostring(string) .. "|r"
+ColorChatString = function(string, hexColor)
+  return "|cff" .. tostring(hexColor) .. tostring(string) .. "|r"
 end
 
 ScanForUnknownSkillCards = function()
@@ -504,8 +510,8 @@ ScanForUnknownSkillCards = function()
     end
   end
 
-  normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix .. normalSkillCards .. " / " .. AddGoldenColorToString(goldenSkillCards))
-  luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix .. "  " .. luckySkillCards .. " / " .. AddGoldenColorToString(luckyGoldenSkillCards))
+  normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix .. normalSkillCards .. " / " .. ColorChatString(goldenSkillCards, stringHexColors.Gold))
+  luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix .. "  " .. luckySkillCards .. " / " .. ColorChatString(luckyGoldenSkillCards, stringHexColors.Gold))
 end
 
 function ASC:EnableAddon(settingGuard)
