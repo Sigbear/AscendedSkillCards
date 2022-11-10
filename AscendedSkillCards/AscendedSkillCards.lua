@@ -6,6 +6,7 @@ local AddGoldenColorToString
 local HideAllButtonFrames
 local AddOrReuseButtonFrames
 local ResizeWindowAndShowButtonFrames
+local UpdateSkillCardsInInventoryText
 
 -- GUI
 topSkillCardFrame = CreateFrame("Frame", "AscendedSkillCardsContainerFrame", UIParent, "GameTooltipTemplate")
@@ -19,7 +20,7 @@ local skillCardFrameOptionsButton = CreateFrame("Button", "skillCardFrameOptions
 
 local unknownSkillCardsInInvTitleText = nil
 local menuTexts = {
-  UnknownCardsInInv = "Unknown skill cards in inv",
+  UnknownCardsInInv = "Unknown skill cards",
   NoUnknownCardsInInv = "No unknown cards found",
   NormalCardCounterTextPrefix = "Normal cards: ",
   LuckySkillCardsCounterPrefix = "Lucky cards: "
@@ -520,6 +521,7 @@ function ASC:EnableAddon(settingGuard)
     HideAllButtonFrames()
     AddOrReuseButtonFrames()
     ResizeWindowAndShowButtonFrames()
+    UpdateSkillCardsInInventoryText()
     firstTimeLoadingMenu = false
   end
   -- check optional settings flag.
@@ -625,6 +627,16 @@ ResizeWindowAndShowButtonFrames = function()
     math.max(0, (math.ceil(totalUnknownCards / skillCardButtonsPerRow) - 1) * buttonHeight))
 end
 
+UpdateSkillCardsInInventoryText = function()
+  if (unknownSkillCardsInInvTitleText ~= nil) then
+    if (unknownCards > 0 or unknownGoldenskillCards > 0) then
+      unknownSkillCardsInInvTitleText:SetText(menuTexts.UnknownCardsInInv)
+    else
+      unknownSkillCardsInInvTitleText:SetText(menuTexts.NoUnknownCardsInInv)
+    end
+  end
+end
+
 function ASC:BAG_UPDATE(_, bagID)
   local oldUknownCards = unknownCards
   ScanForUnknownSkillCards()
@@ -632,14 +644,7 @@ function ASC:BAG_UPDATE(_, bagID)
     HideAllButtonFrames()
     AddOrReuseButtonFrames()
     ResizeWindowAndShowButtonFrames()
-  end
-
-  if (unknownSkillCardsInInvTitleText ~= nil) then
-    if (unknownCards > 0) then
-      unknownSkillCardsInInvTitleText:SetText(menuTexts.UnknownCardsInInv)
-    else
-      unknownSkillCardsInInvTitleText:SetText(menuTexts.NoUnknownCardsInInv)
-    end
+    UpdateSkillCardsInInventoryText()
   end
 end
 
