@@ -305,21 +305,37 @@ local function CreateGossipFrameInteractionButtons()
   -- Exchange 5 normal cards for sealed deck
   local btn = CreateFrame("Button", "exchangeNormalCardsButton", topSkillCardFrame,
     "UIPanelButtonTemplate")
-  btn:SetPoint("TOPRIGHT", -15, -75)
-  btn:SetWidth(175)
+  btn:SetPoint("TOPLEFT", 15, -75)
+  btn:SetWidth(85)
   btn:SetHeight(30)
-  btn:SetText("Exchange Normal Cards")
+  btn:SetText("Normal")
   btn:SetScript("OnClick", function(self, button) ExchangeCards(1) end)
   SetButtonTooltipText(btn, 1)
   -- Exchange 5 lucky cards for sealed deck
   btn = CreateFrame("Button", "ExchangeLuckyCardsButton", topSkillCardFrame,
     "UIPanelButtonTemplate")
-  btn:SetPoint("TOPRIGHT", -15 , -105)
-  btn:SetWidth(175)
+  btn:SetPoint("TOPLEFT", 15, -105)
+  btn:SetWidth(85)
   btn:SetHeight(30)
-  btn:SetText("Exchange Lucky Cards")
+  btn:SetText("Lucky")
   btn:SetScript("OnClick", function(self, button) ExchangeCards(2) end)
   SetButtonTooltipText(btn, 2)
+  local btn = CreateFrame("Button", "exchangeGoldenSkillCardsButton", topSkillCardFrame,
+    "UIPanelButtonTemplate")
+  btn:SetPoint("TOPRIGHT", -15, -75)
+  btn:SetWidth(85)
+  btn:SetHeight(30)
+  btn:SetText(AddGoldenColorToString("Normal"))
+  btn:SetScript("OnClick", function(self, button) ExchangeCards(3) end)
+  SetButtonTooltipText(btn, 3)
+  local btn = CreateFrame("Button", "exchangeLuckyGoldenSkillCardsButton", topSkillCardFrame,
+    "UIPanelButtonTemplate")
+  btn:SetPoint("TOPRIGHT", -15, -105)
+  btn:SetWidth(85)
+  btn:SetHeight(30)
+  btn:SetText(AddGoldenColorToString("Lucky"))
+  btn:SetScript("OnClick", function(self, button) ExchangeCards(4) end)
+  SetButtonTooltipText(btn, 4)
 end
 
 local function SetupGUI()
