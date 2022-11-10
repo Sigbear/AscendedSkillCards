@@ -30,26 +30,22 @@ local exchangeCardsTooltipData =
   {
     header = "Exchange 5 normal skill cards",
     text = "Exchange 5 random normal skill cards for sealed decks.",
-    warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
-    "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
+    info = "\nFor this to work you have to have the exchange skill card window open"
   },
   {
     header = "Exchange 5 lucky skill cards",
     text = "Exchange 5 random lucky skill cards for sealed decks.",
-    warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
-    "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
+    info = "\nFor this to work you have to have the exchange skill card window open"
   },
   {
     header = "Exchange 5 golden skill cards",
     text = "Exchange 5 random golden skill cards for golden sealed decks.",
-    warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
-    "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
+    info = "\nFor this to work you have to have the exchange skill card window open"
   },
   {
     header = "Exchange 5 golden lucky skill cards",
     text = "Exchange 5 random golden lucky skill cards for sealed decks.",
-    warning = "\n\n|cffffffff!!|r|cffff0000Warning|r|cffffffff!!|r\n\nThis will select a dialogue option and accept the following " ..
-    "popup automatically. Make sure you have the skill card exchange npc dialogue open before clicking this."
+    info = "\nFor this to work you have to have the exchange skill card window open"
   }
 }
 
@@ -258,7 +254,7 @@ local function SetButtonTooltipText(btn, tooltipIndex)
       tooltip:SetOwner(topSkillCardFrame, "ANCHOR_TOPRIGHT")
       tooltip:AddLine(tooltipData["header"], 1, 1, 1)
       tooltip:AddLine(tooltipData["text"], 1, 1, 1, true)
-      tooltip:AddLine(tooltipData["warning"], 1, 1, 1, true)
+      tooltip:AddLine(tooltipData["info"], 1, 1, 1, true)
       tooltip:Show()
     end
   end)
@@ -273,6 +269,13 @@ local function DisplayErrorMessage(errorMessage)
   UIErrorsFrame:AddMessage(errorMessage, 1, 0, 0, 1, 1);
 end
 
+--[[
+  operationindex:
+   1 = exchange normal cards
+   2 = exchange normal lucky cards
+   3 = exchange golden cards
+   4 = exchange golden lucky cards
+--]]
 local function ExchangeCards(operationIndex)
   if (not operationIndex) then return end
   ScanForUnknownSkillCards()
@@ -291,12 +294,16 @@ local function ExchangeCards(operationIndex)
       return
     end
     SkillCardExchangeUI.content.exchange.buttonNormal:Click()
-  elseif(operationIndex == 2)then
+  elseif(operationIndex == 2) then
     if (luckySkillCards < 5) then
       DisplayErrorMessage("You don't have enough lucky cards for an exchange")
       return
     end
     SkillCardExchangeUI.content.exchange.buttonNormalLucky:Click()
+  elseif(operationIndex == 3) then
+    -- normal golden
+  elseif(operationIndex == 4) then
+    -- lucky golden
   end
  StaticPopup1Button1:Click()
 end
@@ -406,6 +413,7 @@ AddGoldenColorToString = function(string)
 end
 
 ScanForUnknownSkillCards = function()
+  DebugPrint("BEGIN ScanForUnknownSkillCards")
 
   BeginNewSession()
 
@@ -468,6 +476,7 @@ ScanForUnknownSkillCards = function()
 
   normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix .. normalSkillCards .. " / " .. AddGoldenColorToString(goldenSkillCards))
   luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix .. "  " .. luckySkillCards .. " / " .. AddGoldenColorToString(luckyGoldenSkillCards))
+  DebugPrint("END ScanForUnknownSkillCards")
 end
 
 function ASC:EnableAddon(settingGuard)
@@ -577,6 +586,7 @@ local function ShowAllButtonFrames()
       end
     end
   end
+  DebugPrint("unknownCards before setHeight: " .. tostring(unknownCards))
   topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight +
     math.max(0, (math.ceil(unknownCards / skillCardButtonsPerRow) - 1) * buttonHeight))
 end
