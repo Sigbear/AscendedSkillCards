@@ -2,6 +2,7 @@ local ASC = LibStub("AceAddon-3.0"):NewAddon("AscendedSkillCards", "AceEvent-3.0
 
 -- forward declaration
 local ScanForUnknownSkillCards
+local AddGoldenColorToString
 
 -- GUI
 topSkillCardFrame = CreateFrame("Frame", "AscendedSkillCardsContainerFrame", UIParent, "GameTooltipTemplate")
@@ -72,11 +73,27 @@ local testCardIndex = 0
 -- unknown skill card "bag slot"
 local unknownSkillCards = {}
 local unknownCards = 0
+local unknownGoldenskillCards = 0
 local normalSkillCards = 0
 local luckySkillCards = 0
 local goldenSkillCards = 0
 local luckyGoldenSkillCards = 0
 local totalCards = 0
+
+-- add local "session based" variables here as they are needed
+local function BeginNewSession()
+
+  table.wipe(unknownSkillCards)
+
+  unknownCards = 0
+  unknownGoldenskillCards = 0
+  normalSkillCards = 0
+  luckySkillCards = 0
+  goldenSkillCards = 0
+  luckyGoldenSkillCards = 0
+  totalCards = 0
+end
+
 
 -- reuse card frames
 local buttonFramePool = {}
@@ -311,7 +328,6 @@ local function SetupGUI()
   topSkillCardFrame:EnableMouse(true)
   topSkillCardFrame:SetWidth(200)
   topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight)
-  -- topSkillCardFrame:SetPoint("CENTER", 0, 0)
 
   -- close button
   closeSkillCardFrameButton:SetWidth(30)
@@ -320,11 +336,11 @@ local function SetupGUI()
   closeSkillCardFrameButton:SetScript("OnClick", ASC.DisableAddon)
 
   -- title
-  CreateText(topSkillCardFrame, "Skill cards in inv", 0, -10, true)
+  CreateText(topSkillCardFrame, "Normal/" .. AddGoldenColorToString("Golden") .. " cards", 0, -10, true)
 
   -- counters
-  normalSkillCardCounterText:SetPoint("TOPLEFT", 15, -35)
-  luckySkillCardCounterText:SetPoint("TOPLEFT", 15, -50)
+  normalSkillCardCounterText:SetPoint("TOPLEFT", 25, -35)
+  luckySkillCardCounterText:SetPoint("TOPLEFT", 25, -50)
   normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix)
   luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix)
 
@@ -357,7 +373,7 @@ local function SetupGUI()
   -- menu
   skillCardFrameOptionsButton:SetHeight(30)
   skillCardFrameOptionsButton:SetWidth(30)
-  skillCardFrameOptionsButton:SetPoint("TOPRIGHT", -13, 3)
+  skillCardFrameOptionsButton:SetPoint("TOPLEFT", 0, 3)
   skillCardFrameOptionsButton:SetNormalTexture("Interface\\Minimap\\UI-Minimap-MinimizeButtonUp-Up")
   skillCardFrameOptionsButton:SetPushedTexture("Interface\\Minimap\\UI-Minimap-MinimizeButtonUp-Down")
   skillCardFrameOptionsButton:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-MinimizeButtonUp-Highlight")
@@ -369,14 +385,13 @@ local function SetupGUI()
   end)
 end
 
+AddGoldenColorToString = function(string)
+  return "|cffe6cc80" .. tostring(string) .. "|r"
+end
+
 ScanForUnknownSkillCards = function()
 
-  table.wipe(unknownSkillCards)
-
-  normalSkillCards = 0
-  luckySkillCards = 0
-  unknownCards = 0
-  totalCards = 0
+  BeginNewSession()
 
   -- TODO: test this later.
   -- C_ContentLoader:Load("SkillCardData")
@@ -399,14 +414,26 @@ ScanForUnknownSkillCards = function()
         -- name can be nil when logging in the first time.
         if (itemName == nil) then break else
           local itemIsSkillCard, itemIsGoldenSkillCard = CheckStringForSkillCard(itemName)
-          if (itemIsSkillCard and not itemIsGoldenSkillCard) then
+          -- filter on skill cards only
+          if (itemIsSkillCard or itemIsGoldenSkillCard) then
             totalCards = totalCards + itemCount
 
-            if (GetSkillCard(skillCardId)) then
-              normalSkillCards = normalSkillCards + itemCount
+            local isNormalSkillCard = GetSkillCard(skillCardId)
+            local isLuckySkillCard = GetLuckyCard(skillCardId)
+
+            if (isNormalSkillCard) then
+              if (isNormalSkillCard.isGolden) then
+                goldenSkillCards = goldenSkillCards + itemCount
+              else
+                normalSkillCards = normalSkillCards + itemCount
+              end
             end
-            if (GetLuckyCard(skillCardId)) then
-              luckySkillCards = luckySkillCards + itemCount
+            if (isLuckySkillCard) then
+              if (isLuckySkillCard.isGolden) then
+                luckyGoldenSkillCards = luckyGoldenSkillCards + itemCount
+              else
+                luckySkillCards = luckySkillCards + itemCount
+              end
             end
 
             -- check if skillcard is unknown
@@ -423,8 +450,8 @@ ScanForUnknownSkillCards = function()
     end
   end
 
-  normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix .. normalSkillCards)
-  luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix .. luckySkillCards)
+  normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix .. normalSkillCards .. " / " .. AddGoldenColorToString(goldenSkillCards))
+  luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix .. "  " .. luckySkillCards .. " / " .. AddGoldenColorToString(luckyGoldenSkillCards))
 end
 
 function ASC:EnableAddon(settingGuard)
@@ -434,6 +461,8 @@ function ASC:EnableAddon(settingGuard)
     -- _G["skillCardButtonFrame"] = topSkillCardFrame
     -- tinsert(UISpecialFrames, "skillCardButtonFrame");
     SetupGUI()
+    -- snap frame to middle first time.
+    topSkillCardFrame:SetPoint("CENTER", 0, 0)
     ScanForUnknownSkillCards()
     firstTimeLoadingMenu = false
   end
