@@ -93,6 +93,7 @@ if not AscendedSkillCardsDB then
     EnableTooltips = true,
     isDebugging = false,
     ForceExchangeCards = false,
+    ForceExchangeGoldenCards = false,
     ShowOnOpeningSealedDeck = true,
     ShowOnOpeningExchangeWindow = true,
     HideOnClosingExchangeWindow = true,
@@ -135,10 +136,15 @@ function ASC:DisableAddon(settingGuard)
   topSkillCardFrame:Hide()
 end
 
-local function ToggleSetting(nameOfSetting)
+-- toggle corresponding setting in DB or set it to defaultValue if it doesn't exist.
+local function ToggleSetting(nameOfSetting, defaultValue)
   if(nameOfSetting == "" or nil) then DebugPrint("Setting could not be toggled. Bad input") return end
-  if (AscendedSkillCardsDB[nameOfSetting] == nil) then DebugPrint("Setting: " .. nameOfSetting .. " did not exist in DB. Aborting toggle.") return end
-  AscendedSkillCardsDB[nameOfSetting] = not AscendedSkillCardsDB[nameOfSetting]
+  if (AscendedSkillCardsDB[nameOfSetting] == nil) then
+    DebugPrint("Setting: " .. nameOfSetting .. " did not exist in DB. Setting default of " .. tostring(defaultValue))
+    AscendedSkillCardsDB[nameOfSetting] = defaultValue
+  else
+    AscendedSkillCardsDB[nameOfSetting] = not AscendedSkillCardsDB[nameOfSetting]
+  end
 end
 
 local function CreateAndShowOptionsMenu()
@@ -200,12 +206,28 @@ local function CreateAndShowOptionsMenu()
     },
     {
       text = "Force exchange",
-      keepShownOnClick = true,
-      tooltipTitle = "Force exchange",
-      tooltipOnButton = true,
-      checked = AscendedSkillCardsDB.ForceExchangeCards,
-      tooltipText = "Exchange cards even if you have unlearned skill cards in inventory",
-      func = function() ToggleSetting("ForceExchangeCards") end
+      hasArrow = true,
+      menuList =
+      {
+        {
+          text = "Normal cards",
+          keepShownOnClick = true,
+          tooltipTitle = "Force normal exchange",
+          tooltipOnButton = true,
+          checked = AscendedSkillCardsDB.ForceExchangeCards,
+          tooltipText = "Exchange cards even if you have unlearned skill cards in inventory",
+          func = function() ToggleSetting("ForceExchangeCards") end
+        },
+        {
+          text = "Golden cards",
+          keepShownOnClick = true,
+          tooltipTitle = "Force golden exchange",
+          tooltipOnButton = true,
+          checked = AscendedSkillCardsDB.ForceExchangeGoldenCards,
+          tooltipText = "Exchange golden cards even if you have unlearned golden skill cards in inventory",
+          func = function() ToggleSetting("ForceExchangeGoldenCards") end
+        }
+      }
     }
   }
   EasyMenu(menu, skillCardFrameOptionsMenu, skillCardFrameOptionsButton, 0, 119, "MENU")
