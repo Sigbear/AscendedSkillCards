@@ -8,6 +8,7 @@
 * Options menu to customize addon behaviour
 
 #### To install:
+
 Download [AscendedSkillCards.7z](https://github.com/Sigbear/AscendedSkillCards/releases/download/1.3.0/AscendedSkillCards.7z) -> extract the AscendedSkillCards folder and put it in your addons folder.
 
 #### Usage:  
@@ -16,7 +17,7 @@ As you open sealed decks, any unknown cards will be displayed in a list at the b
 Left click any of the unknown cards to learn it.
 
 
-| ![AscendedSkillCards 1 3 GUI](https://user-images.githubusercontent.com/8190851/201189138-9b010c1f-1fb4-46d4-9bd2-c91474ec06c3.png) |
+| ![ASC 1 3 1](https://user-images.githubusercontent.com/8190851/201193712-30ed632c-d9ca-4faf-98a5-db2a8d435af1.png) |
 |:--:|
 | *Any unknown cards will be listed in the gui, so you can easily see and click it* |
 
