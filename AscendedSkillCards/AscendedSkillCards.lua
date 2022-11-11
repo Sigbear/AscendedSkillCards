@@ -299,13 +299,20 @@ local function ExchangeCards(operationIndex)
     return
   end
 
+  DebugPrint("-----------------------------")
+  DebugPrint("ForceExchangeCards: " .. tostring(AscendedSkillCardsDB.ForceExchangeCards))
+  DebugPrint("ForceExchangeGoldenCards: " .. tostring(AscendedSkillCardsDB.ForceExchangeGoldenCards))
+  DebugPrint("ExchangeCards thinks you have:")
+  DebugPrint("unknownCards: " .. tostring(unknownCards) .. " and unknownGoldenSkillCards: " .. tostring(unknownGoldenskillCards))
+  DebugPrint("-----------------------------")
+
   -- normal cards check
   if ((operationIndex == 1 or operationIndex == 2) and not AscendedSkillCardsDB.ForceExchangeCards and unknownCards ~= 0) then
     DisplayErrorMessage("You have unlearned skill cards in inventory")
     return
   end
   -- golden cards check
-  if ((operationIndex == 3 or operationIndex == 4) and not AscendedSkillCardsDB.ForceExchangeGoldenCards and goldenSkillCards ~= 0) then
+  if ((operationIndex == 3 or operationIndex == 4) and not AscendedSkillCardsDB.ForceExchangeGoldenCards and unknownGoldenskillCards ~= 0) then
     DisplayErrorMessage("You have unlearned golden skill cards in inventory")
     return
   end
@@ -327,14 +334,12 @@ local function ExchangeCards(operationIndex)
       DisplayErrorMessage("You don't have enough golden skill cards for an exchange")
       return
     end
-    DebugPrint("Normal golden clickity")
     SkillCardExchangeUI.content.exchange.buttonGold:Click()
   elseif(operationIndex == 4) then
     if (luckyGoldenSkillCards < 5) then
       DisplayErrorMessage("You don't have enough golden lucky cards for an exchange")
       return
     end
-    DebugPrint("Lucky Golden clickity")
     SkillCardExchangeUI.content.exchange.buttonGoldLucky:Click()
   end
  StaticPopup1Button1:Click()
@@ -498,11 +503,12 @@ ScanForUnknownSkillCards = function()
             elseif (isSkillCardKnown == false) then
               unknownSkillCards[skillCardId] = bag .. " " .. slot
               if (isLuckySkillCard and isLuckySkillCard.isGolden or isNormalSkillCard and isNormalSkillCard.isGolden) then
+                DebugPrint("Found an unknown golden card")
                 unknownGoldenskillCards = unknownGoldenskillCards + 1
               else
+                DebugPrint("Found an unknown card")
                 unknownCards = unknownCards + 1
               end
-
             end
           end
         end
