@@ -67,14 +67,14 @@ local function GetRGB(hexcolor)
       g = g,
       b = b
     }
-    DebugPrint("Cached r: " .. tostring(cachedRGB[hexcolor].r) ..
-      " b: " .. tostring(cachedRGB[hexcolor].r) ..
-      "g: " .. tostring(cachedRGB[hexcolor].r))
+    -- DebugPrint("Cached r: " .. tostring(cachedRGB[hexcolor].r) ..
+    --   " b: " .. tostring(cachedRGB[hexcolor].r) ..
+    --   "g: " .. tostring(cachedRGB[hexcolor].r))
   end
-  DebugPrint("GetRGB got input: " .. hexcolor ..
-    " returning values r: " .. tostring(cachedRGB[hexcolor].r) ..
-    " g: " .. tostring(cachedRGB[hexcolor].g) ..
-    " b :" .. tostring(cachedRGB[hexcolor].b))
+  -- DebugPrint("GetRGB got input: " .. hexcolor ..
+  --   " returning values r: " .. tostring(cachedRGB[hexcolor].r) ..
+  --   " g: " .. tostring(cachedRGB[hexcolor].g) ..
+  --   " b :" .. tostring(cachedRGB[hexcolor].b))
   return cachedRGB[hexcolor].r, cachedRGB[hexcolor].g, cachedRGB[hexcolor].b
 end
 
@@ -203,14 +203,30 @@ function ASC:DisableAddon(settingGuard)
   topSkillCardFrame:Hide()
 end
 
+-- Does a refresh
+-- scans for cards in inv.
+-- reuses or creates new buttonframes for any found unknown skill cards
+-- update gui
+local function Refresh()
+  ScanForUnknownSkillCards()
+  HideAllButtonFrames()
+  AddOrReuseButtonFrames()
+  ResizeWindowAndShowButtonFrames()
+  UpdateSkillCardsInInventoryText()
+end
+
 -- toggle corresponding setting in DB or set it to defaultValue if it doesn't exist.
-local function ToggleSetting(nameOfSetting, defaultValue)
+local function ToggleSetting(nameOfSetting, defaultValue, refresh)
   if (nameOfSetting == "" or nil) then DebugPrint("Setting could not be toggled. Bad input") return end
   if (AscendedSkillCardsDB[nameOfSetting] == nil) then
     DebugPrint("Setting: " .. nameOfSetting .. " did not exist in DB. Setting default of " .. tostring(defaultValue))
     AscendedSkillCardsDB[nameOfSetting] = defaultValue
   else
     AscendedSkillCardsDB[nameOfSetting] = not AscendedSkillCardsDB[nameOfSetting]
+  end
+  if (refresh) then
+    DebugPrint("Setting requested refresh")
+    Refresh()
   end
 end
 
@@ -263,19 +279,14 @@ local function CreateAndShowOptionsMenu()
       }
     },
     {
-      text = "Enable tooltips",
-      keepShownOnClick = true,
-      tooltipTitle = "Show button tooltips",
-      tooltipOnButton = true,
-      checked = AscendedSkillCardsDB.EnableTooltips,
-      tooltipText = "Enable button tooltips",
-      func = function() ToggleSetting("EnableTooltips", true) end
-    },
-    {
-      text = "Force exchange",
+      text = "Exchange buttons",
       hasArrow = true,
       menuList =
       {
+        {
+          text = "Force exchange:",
+          isTitle = true
+        },
         {
           text = "Normal cards",
           keepShownOnClick = true,
@@ -293,7 +304,49 @@ local function CreateAndShowOptionsMenu()
           checked = AscendedSkillCardsDB.ForceExchangeGoldenCards,
           tooltipText = "Exchange golden cards even if you have unlearned golden skill cards in inventory",
           func = function() ToggleSetting("ForceExchangeGoldenCards", false) end
+        },
+        {
+          text = "Tooltips",
+          isTitle = true
+        },
+        {
+          text = "Enable tooltips",
+          keepShownOnClick = true,
+          tooltipTitle = "Show button tooltips",
+          tooltipOnButton = true,
+          checked = AscendedSkillCardsDB.EnableTooltips,
+          tooltipText = "Enable button tooltips",
+          func = function() ToggleSetting("EnableTooltips", true) end
         }
+      }
+    },
+    {
+      text = "Skill cards",
+      hasArrow = true,
+      menuList =
+      {
+        {
+          text = "Show icon border",
+          isTitle = true
+        },
+        {
+          text = "Color by rarity",
+          keepShownOnClick = true,
+          tooltipTitle = "Colored by rarity",
+          tooltipOnButton = true,
+          checked = AscendedSkillCardsDB.EnableColorSkillCardButtonBorderByRarity,
+          tooltipText = "Show a colored border on the skill card icon colored by rarity",
+          func = function() ToggleSetting("EnableColorSkillCardButtonBorderByRarity", false, true) end
+        }
+        -- {
+        --   text = "Colored by type",
+        --   keepShownOnClick = true,
+        --   tooltipTitle = "Colored by type",
+        --   tooltipOnButton = true,
+        --   checked = AscendedSkillCardsDB.EnableColorSkillCardButtonBorderByType,
+        --   tooltipText = "Show a border around the skill card icon colored by type (normal/golden)",
+        --   func = function() ToggleSetting("EnableColorSkillCardButtonBorderByType", false) end
+        -- },
       }
     }
   }
@@ -549,10 +602,8 @@ ScanForUnknownSkillCards = function()
             elseif (isSkillCardKnown == false) then
               unknownSkillCards[skillCardId] = bag .. " " .. slot
               if (isLuckySkillCard and isLuckySkillCard.isGolden or isNormalSkillCard and isNormalSkillCard.isGolden) then
-                DebugPrint("Found an unknown golden card")
                 unknownGoldenskillCards = unknownGoldenskillCards + 1
               else
-                DebugPrint("Found an unknown card")
                 unknownCards = unknownCards + 1
               end
             end
@@ -694,9 +745,17 @@ ResizeWindowAndShowButtonFrames = function()
 
         -- position and color frame
         buttonFrame:SetPoint("TOPLEFT", xOffset, yOffset)
-        local r, g, b = GetRGB(stringHexColors[itemQualityToHexColorIndexLookupTable[buttonFrame.skillCardQuality]])
-        buttonFrame.borderFrame:SetBackdropBorderColor(r, g, b, 1)
-        buttonFrame.borderFrame:SetAllPoints()
+
+        -- backdrop border color update
+        if (AscendedSkillCardsDB.EnableColorSkillCardButtonBorderByRarity)
+        then
+          local r, g, b = GetRGB(stringHexColors[itemQualityToHexColorIndexLookupTable[buttonFrame.skillCardQuality]])
+          buttonFrame.borderFrame:SetBackdropBorderColor(r, g, b, 1)
+          buttonFrame.borderFrame:SetAllPoints()
+          buttonFrame.borderFrame:Show()
+        else
+          buttonFrame.borderFrame:Hide()
+        end
 
         column = column + 1
         if (column > 5) then
@@ -805,6 +864,7 @@ function ASC:OnInitialize()
       ShowOnOpeningExchangeWindow = true,
       HideOnClosingExchangeWindow = true,
       EnableGoldenSkillCards = true,
+      EnableColorSkillCardButtonBorderByRarity = false,
     }
   end
 
