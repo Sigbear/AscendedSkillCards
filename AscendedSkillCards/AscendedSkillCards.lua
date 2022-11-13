@@ -8,11 +8,75 @@ local AddOrReuseButtonFrames
 local ResizeWindowAndShowButtonFrames
 local UpdateSkillCardsInInventoryText
 
+local function DebugPrint(string)
+  if (AscendedSkillCardsDB.isDebugging) then print(string) end
+end
+
+-- session skillcard info cache
+-- TODO: implement this
+local skillCardCache = {}
+
+-- reuse card frames
+local buttonFramePool = {}
+
 local stringHexColors =
 {
+  Common = "ffffff",
+  Uncommon = "1eff00",
+  Rare = "0070dd",
+  Epic = "a335ee",
+  Legendary = "ff8000",
+  -- card type normal/gold
   White = "ffffff",
-  Gold = "e6cc80"
+  Gold = "e6cc80",
 }
+
+local itemQualityToHexColorIndexLookupTable =
+{
+  [1] = "Common",
+  [2] = "UnCommon",
+  [3] = "Rare",
+  [4] = "Epic",
+  [5] = "Legendary"
+}
+
+-- helper function for GetRGB
+local function HexToRGB(hexcolor)
+  local r = tonumber(string.sub(hexcolor, 1, 2), 16) / 255
+  local g = tonumber(string.sub(hexcolor, 3, 4), 16) / 255
+  local b = tonumber(string.sub(hexcolor, 5, 6), 16) / 255
+  return r, g, b
+end
+
+-- Returns r,g,b values for the given hexadecimal input
+local function GetRGB(hexcolor)
+  if (not hexcolor or hexcolor == "") then
+    DebugPrint("GetRGB arg error: input nil or empty string. Defaulting to white")
+    return 1.0, 1.0, 1.0
+  elseif (string.len(hexcolor) ~= 6) then
+    DebugPrint("GetRGB arg input hex not 6 characters long. Defaulting to white")
+    return 1.0, 1.0, 1.0
+  end
+
+  local cachedRGB = AscendedSkillCardsDB.rgbColors
+  if not cachedRGB[hexcolor] then
+    DebugPrint("Caching hexcolor: " .. hexcolor)
+    local r, g, b = HexToRGB(hexcolor)
+    cachedRGB[hexcolor] = {
+      r = r,
+      g = g,
+      b = b
+    }
+    DebugPrint("Cached r: " .. tostring(cachedRGB[hexcolor].r) ..
+      " b: " .. tostring(cachedRGB[hexcolor].r) ..
+      "g: " .. tostring(cachedRGB[hexcolor].r))
+  end
+  DebugPrint("GetRGB got input: " .. hexcolor ..
+    " returning values r: " .. tostring(cachedRGB[hexcolor].r) ..
+    " g: " .. tostring(cachedRGB[hexcolor].g) ..
+    " b :" .. tostring(cachedRGB[hexcolor].b))
+  return cachedRGB[hexcolor].r, cachedRGB[hexcolor].g, cachedRGB[hexcolor].b
+end
 
 -- GUI
 topSkillCardFrame = CreateFrame("Frame", "AscendedSkillCardsContainerFrame", UIParent, "GameTooltipTemplate")
@@ -102,33 +166,11 @@ local function BeginNewSession()
   totalCards = 0
 end
 
-
--- reuse card frames
-local buttonFramePool = {}
-
 -- button config
 local buttonWidth, buttonHeight = 32, 32
 
 -- make sure vanity tab has been opened to query server
 local alreadyOpenedVanityTab = false
-
--- settings
-if not AscendedSkillCardsDB then
-  AscendedSkillCardsDB = {
-    EnableTooltips = true,
-    isDebugging = false,
-    ForceExchangeCards = false,
-    ForceExchangeGoldenCards = false,
-    ShowOnOpeningSealedDeck = true,
-    ShowOnOpeningExchangeWindow = true,
-    HideOnClosingExchangeWindow = true,
-    EnableGoldenSkillCards = true,
-  }
-end
-
-local function DebugPrint(string)
-  if (AscendedSkillCardsDB.isDebugging) then print(string) end
-end
 
 local function CheckStringForSkillCard(string)
   local itemIsSkillCard = string.find(string, "Skill Card", 1, true) or
@@ -163,7 +205,7 @@ end
 
 -- toggle corresponding setting in DB or set it to defaultValue if it doesn't exist.
 local function ToggleSetting(nameOfSetting, defaultValue)
-  if(nameOfSetting == "" or nil) then DebugPrint("Setting could not be toggled. Bad input") return end
+  if (nameOfSetting == "" or nil) then DebugPrint("Setting could not be toggled. Bad input") return end
   if (AscendedSkillCardsDB[nameOfSetting] == nil) then
     DebugPrint("Setting: " .. nameOfSetting .. " did not exist in DB. Setting default of " .. tostring(defaultValue))
     AscendedSkillCardsDB[nameOfSetting] = defaultValue
@@ -179,7 +221,7 @@ local function CreateAndShowOptionsMenu()
       isTitle = true
     },
     {
-      text = "Show/hide",
+      text = "Addon",
       hasArrow = true,
       menuList =
       {
@@ -221,9 +263,9 @@ local function CreateAndShowOptionsMenu()
       }
     },
     {
-      text = "Show tooltips",
+      text = "Enable tooltips",
       keepShownOnClick = true,
-      tooltipTitle = "Show tooltips",
+      tooltipTitle = "Show button tooltips",
       tooltipOnButton = true,
       checked = AscendedSkillCardsDB.EnableTooltips,
       tooltipText = "Enable button tooltips",
@@ -303,16 +345,20 @@ local function ExchangeCards(operationIndex)
   DebugPrint("ForceExchangeCards: " .. tostring(AscendedSkillCardsDB.ForceExchangeCards))
   DebugPrint("ForceExchangeGoldenCards: " .. tostring(AscendedSkillCardsDB.ForceExchangeGoldenCards))
   DebugPrint("ExchangeCards thinks you have:")
-  DebugPrint("unknownCards: " .. tostring(unknownCards) .. " and unknownGoldenSkillCards: " .. tostring(unknownGoldenskillCards))
+  DebugPrint("unknownCards: " ..
+    tostring(unknownCards) .. " and unknownGoldenSkillCards: " .. tostring(unknownGoldenskillCards))
   DebugPrint("-----------------------------")
 
   -- normal cards check
-  if ((operationIndex == 1 or operationIndex == 2) and not AscendedSkillCardsDB.ForceExchangeCards and unknownCards ~= 0) then
+  if ((operationIndex == 1 or operationIndex == 2) and not AscendedSkillCardsDB.ForceExchangeCards and unknownCards ~= 0
+      ) then
     DisplayErrorMessage("You have unlearned skill cards in inventory")
     return
   end
   -- golden cards check
-  if ((operationIndex == 3 or operationIndex == 4) and not AscendedSkillCardsDB.ForceExchangeGoldenCards and unknownGoldenskillCards ~= 0) then
+  if (
+      (operationIndex == 3 or operationIndex == 4) and not AscendedSkillCardsDB.ForceExchangeGoldenCards and
+          unknownGoldenskillCards ~= 0) then
     DisplayErrorMessage("You have unlearned golden skill cards in inventory")
     return
   end
@@ -323,26 +369,26 @@ local function ExchangeCards(operationIndex)
       return
     end
     SkillCardExchangeUI.content.exchange.buttonNormal:Click()
-  elseif(operationIndex == 2) then
+  elseif (operationIndex == 2) then
     if (luckySkillCards < 5) then
       DisplayErrorMessage("You don't have enough lucky cards for an exchange")
       return
     end
     SkillCardExchangeUI.content.exchange.buttonNormalLucky:Click()
-  elseif(operationIndex == 3) then
-    if(goldenSkillCards < 5) then
+  elseif (operationIndex == 3) then
+    if (goldenSkillCards < 5) then
       DisplayErrorMessage("You don't have enough golden skill cards for an exchange")
       return
     end
     SkillCardExchangeUI.content.exchange.buttonGold:Click()
-  elseif(operationIndex == 4) then
+  elseif (operationIndex == 4) then
     if (luckyGoldenSkillCards < 5) then
       DisplayErrorMessage("You don't have enough golden lucky cards for an exchange")
       return
     end
     SkillCardExchangeUI.content.exchange.buttonGoldLucky:Click()
   end
- StaticPopup1Button1:Click()
+  StaticPopup1Button1:Click()
 end
 
 local function CreateGossipFrameInteractionButtons()
@@ -516,8 +562,10 @@ ScanForUnknownSkillCards = function()
     end
   end
 
-  normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix .. normalSkillCards .. " / " .. ColorChatString(goldenSkillCards, stringHexColors.Gold))
-  luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix .. "  " .. luckySkillCards .. " / " .. ColorChatString(luckyGoldenSkillCards, stringHexColors.Gold))
+  normalSkillCardCounterText:SetText(menuTexts.NormalCardCounterTextPrefix ..
+    normalSkillCards .. " / " .. ColorChatString(goldenSkillCards, stringHexColors.Gold))
+  luckySkillCardCounterText:SetText(menuTexts.LuckySkillCardsCounterPrefix ..
+    "  " .. luckySkillCards .. " / " .. ColorChatString(luckyGoldenSkillCards, stringHexColors.Gold))
 end
 
 function ASC:EnableAddon(settingGuard)
@@ -542,10 +590,30 @@ function ASC:EnableAddon(settingGuard)
   topSkillCardFrame:Show()
 end
 
+local function CreateBorderFrameForButtonWithTexture(buttonFrame)
+
+  local borderFrame = CreateFrame("Frame", nil, buttonFrame)
+
+  -- stretch to cover
+  borderFrame:SetPoint("TOPLEFT", buttonFrame, -1, 1)
+  borderFrame:SetPoint("BOTTOMRIGHT", buttonFrame, 1, -1)
+  -- frame level
+  local parentFrameLevel = buttonFrame:GetFrameLevel()
+  borderFrame:SetFrameLevel(parentFrameLevel + 1)
+  -- add backdrop
+  borderFrame:SetBackdrop({
+    edgeFile = "Interface\\Buttons\\WHITE8X8",
+    edgeSize = 2,
+  })
+
+  buttonFrame.borderFrame = borderFrame
+end
+
 local function AddOrReuseSkillCardButtonFrame(skillCardId, skillCardBagSlot, iterator)
 
   local skillCardItemInfo = { GetItemInfo(skillCardId) }
   local texture = skillCardItemInfo[10]
+  local skillCardQuality = skillCardItemInfo[3]
 
   if buttonFramePool[iterator] == nil then
     DebugPrint("Creating new frame for skillcard")
@@ -567,7 +635,10 @@ local function AddOrReuseSkillCardButtonFrame(skillCardId, skillCardBagSlot, ite
       end
     )
 
+    CreateBorderFrameForButtonWithTexture(btn)
+
     btn.skillCardId = skillCardId
+    btn.skillCardQuality = skillCardQuality
     btn:SetAttribute("type", "item")
     btn:SetAttribute("item", skillCardBagSlot)
     btn:SetWidth(buttonWidth)
@@ -580,6 +651,7 @@ local function AddOrReuseSkillCardButtonFrame(skillCardId, skillCardBagSlot, ite
     DebugPrint("Reusing skillcard button frame")
     local recycledButton = buttonFramePool[iterator]
     recycledButton.skillCardId = skillCardId
+    recycledButton.skillCardQuality = skillCardQuality
     recycledButton:SetAttribute("item", skillCardBagSlot)
     recycledButton:SetNormalTexture(texture)
     recycledButton:GetNormalTexture():SetAllPoints(recycledButton)
@@ -619,7 +691,13 @@ ResizeWindowAndShowButtonFrames = function()
       if (unknownSkillCards[buttonFrame.skillCardId] ~= nil) then
         local xOffset = 4 + column * buttonWidth
         local yOffset = (165 + row * buttonHeight) * -1
+
+        -- position and color frame
         buttonFrame:SetPoint("TOPLEFT", xOffset, yOffset)
+        local r, g, b = GetRGB(stringHexColors[itemQualityToHexColorIndexLookupTable[buttonFrame.skillCardQuality]])
+        buttonFrame.borderFrame:SetBackdropBorderColor(r, g, b, 1)
+        buttonFrame.borderFrame:SetAllPoints()
+
         column = column + 1
         if (column > 5) then
           column = 0
@@ -672,6 +750,11 @@ function ASC:CHAT_MSG_LOOT(_, ...)
   end
 end
 
+local function ClearCache()
+  AscendedSkillCardsDB.rgbColors = {}
+  AscendedSkillCardsDB.skillCards = {}
+end
+
 -- tmp test variables
 local testUnknownCards = 0
 local tmpIndex = 0
@@ -692,32 +775,15 @@ function ASC:SlashCommand(msg)
   elseif (AscendedSkillCardsDB.isDebugging) then
     if (msg == "scan") then
       ScanForUnknownSkillCards()
+    elseif (msg == "color") then
+      for _, btn in pairs(buttonFramePool) do
+        btn.borderFrame:SetBackdropBorderColor(math.random(), math.random(), math.random(), 1)
+      end
+    elseif (msg == "clearcache") then
+      ClearCache()
+      DebugPrint("Cache cleared.")
     elseif (msg == "menu") then
       CreateAndShowOptionsMenu()
-    elseif (msg == "add") then
-      if (tmpIndex < 99) then
-        DebugPrint("Adding card " .. tmpIndex + 1)
-        testUnknownCards = testUnknownCards + 1
-        AddOrReuseSkillCardButtonFrame(testCards[testCardIndex % 7], "0 1", tmpIndex)
-        testCardIndex = testCardIndex + 1
-        tmpIndex = tmpIndex + 1
-      end
-
-      local row, column = 0, 0
-      for _, buttonFrame in pairs(buttonFramePool) do
-        local xOffset = 4 + column * buttonWidth
-        local yOffset = (135 + row * buttonHeight) * -1
-        buttonFrame:SetPoint("TOPLEFT", xOffset, yOffset)
-        column = column + 1
-        if (column > (skillCardButtonsPerRow - 1)) then
-          column = 0
-          row = row + 1
-        end
-        buttonFrame:Show()
-      end
-      DebugPrint("cards/max:" .. tostring(math.ceil(testUnknownCards / skillCardButtonsPerRow)))
-      topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight +
-        math.max(0, (math.ceil(testUnknownCards / skillCardButtonsPerRow) - 1) * buttonHeight))
     end
   end
 end
@@ -727,6 +793,27 @@ function ASC:OnInitialize()
 
   self:RegisterEvent("BAG_UPDATE")
   self:RegisterEvent("CHAT_MSG_LOOT")
+
+  -- settings
+  if not AscendedSkillCardsDB then
+    AscendedSkillCardsDB = {
+      EnableTooltips = true,
+      isDebugging = false,
+      ForceExchangeCards = false,
+      ForceExchangeGoldenCards = false,
+      ShowOnOpeningSealedDeck = true,
+      ShowOnOpeningExchangeWindow = true,
+      HideOnClosingExchangeWindow = true,
+      EnableGoldenSkillCards = true,
+    }
+  end
+
+  -- initiates for backwards compatibility (not having to delete wtfs on updates)
+  if not AscendedSkillCardsDB.rgbColors then
+    DebugPrint("Initiated rgb")
+    AscendedSkillCardsDB.rgbColors = {}
+    AscendedSkillCardsDB.skillCards = {}
+  end
 
   -- Hook skill card exchange frame to show and hide automaticaly on interaction. (Thanks for the tip Anch)
   SkillCardExchangeUI:HookScript("OnShow", function() ASC:EnableAddon("ShowOnOpeningExchangeWindow") end)
