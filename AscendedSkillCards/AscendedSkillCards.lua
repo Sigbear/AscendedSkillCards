@@ -137,8 +137,12 @@ local luckySkillCardCounterText = topSkillCardFrame:CreateFontString(nil, "OVERL
 local goldenNormalSkillCardCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
 local goldenluckySkillCardCounterText = topSkillCardFrame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
 
-local testCards = { [0] = 1405118, 1412042, 1444425, 1431821, 1431935, 1434074, 1180493 }
+-- asc add testing variables
+local testCards = { [0] = 1405118, 1444425, 1434074 }
 local testCardIndex = 0
+local testCardList = {}
+local testUnknownCards = 0
+local tmpIndex = 0
 
 -- unknown skill card "bag slot"
 local unknownSkillCards = {}
@@ -203,10 +207,11 @@ function ASC:DisableAddon(settingGuard)
   topSkillCardFrame:Hide()
 end
 
--- Does a refresh
--- scans for cards in inv.
--- reuses or creates new buttonframes for any found unknown skill cards
--- update gui
+--[[ Does a refresh
+    1. Scans  for cards in inv.
+    2. Reuses or creates new buttonframes for any found unknown skill cards
+    3. Update gui (resize and add buttons -> update gui text to reflect state)
+ ]]--
 local function Refresh()
   ScanForUnknownSkillCards()
   HideAllButtonFrames()
@@ -628,11 +633,7 @@ function ASC:EnableAddon(settingGuard)
     SetupGUI()
     -- snap frame to middle first time.
     topSkillCardFrame:SetPoint("CENTER", 0, 0)
-    ScanForUnknownSkillCards()
-    HideAllButtonFrames()
-    AddOrReuseButtonFrames()
-    ResizeWindowAndShowButtonFrames()
-    UpdateSkillCardsInInventoryText()
+    Refresh()
     firstTimeLoadingMenu = false
   end
   -- check optional settings flag.
@@ -734,12 +735,15 @@ AddOrReuseButtonFrames = function()
   end
 end
 
-ResizeWindowAndShowButtonFrames = function()
+ResizeWindowAndShowButtonFrames = function(testCardList)
+
+  local isTestRun = testCardList ~= nil
+  local cardList = testCardList or unknownSkillCards
   topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight)
-  for _, _ in pairs(unknownSkillCards) do
+  for _, _ in pairs(cardList) do
     local row, column = 0, 0
     for _, buttonFrame in pairs(buttonFramePool) do
-      if (unknownSkillCards[buttonFrame.skillCardId] ~= nil) then
+      if (isTestRun or cardList[buttonFrame.skillCardId] ~= nil) then
         local xOffset = 4 + column * buttonWidth
         local yOffset = (165 + row * buttonHeight) * -1
 
@@ -758,19 +762,17 @@ ResizeWindowAndShowButtonFrames = function()
         end
 
         column = column + 1
-        if (column > 5) then
+        if (column > (skillCardButtonsPerRow - 1)) then
           column = 0
           row = row + 1
         end
-        if (row < 5) then
-          buttonFrame:Show()
-        end
+        buttonFrame:Show()
       end
     end
   end
   DebugPrint("unknownCards before setHeight: " .. tostring(unknownCards))
   DebugPrint("Unknown golden cards: " .. tostring(unknownGoldenskillCards))
-  totalUnknownCards = unknownCards + unknownGoldenskillCards
+  totalUnknownCards = isTestRun and testUnknownCards or unknownCards + unknownGoldenskillCards
   DebugPrint("Total unknown cards: " .. tostring(totalUnknownCards))
   topSkillCardFrame:SetHeight(defaultSkillCardFrameHeight +
     math.max(0, (math.ceil(totalUnknownCards / skillCardButtonsPerRow) - 1) * buttonHeight))
@@ -814,10 +816,6 @@ local function ClearCache()
   AscendedSkillCardsDB.skillCards = {}
 end
 
--- tmp test variables
-local testUnknownCards = 0
-local tmpIndex = 0
-
 function ASC:SlashCommand(msg)
   if not msg or msg:trim() == "" then
     if (topSkillCardFrame:IsVisible()) then
@@ -843,6 +841,19 @@ function ASC:SlashCommand(msg)
       DebugPrint("Cache cleared.")
     elseif (msg == "menu") then
       CreateAndShowOptionsMenu()
+    elseif (msg == "add") then
+
+      -- grab testcardId and add to test card list
+      DebugPrint("Adding card " .. tmpIndex + 1)
+      local testCardId = testCards[testCardIndex % 3]
+      tinsert(testCardList, testCardId)
+      -- update gui
+      AddOrReuseSkillCardButtonFrame(testCardId, "0 1", tmpIndex)
+      testUnknownCards = testUnknownCards + 1
+      ResizeWindowAndShowButtonFrames(testCardList)
+
+      testCardIndex = testCardIndex + 1
+      tmpIndex = tmpIndex + 1
     end
   end
 end
