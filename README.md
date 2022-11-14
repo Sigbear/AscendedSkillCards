@@ -9,7 +9,7 @@
 
 #### To install:
 
-Download [AscendedSkillCards.7z](https://github.com/Sigbear/AscendedSkillCards/releases/download/1.4.0/AscendedSkillCards.7z) -> extract the AscendedSkillCards folder and put it in your addons folder.
+Download [AscendedSkillCards.7z](https://github.com/Sigbear/AscendedSkillCards/releases/download/1.4.1/AscendedSkillCards.7z) -> extract the AscendedSkillCards folder and put it in your addons folder.
 
 #### Usage:  
 The GUI can be toggled with the command /asc and will by default pop up automatically  
