@@ -22,7 +22,7 @@ Left click any of the unknown cards to learn it.
 | *Any unknown cards will be listed in the gui, so you can easily see and click it* |
 
 ### Buttons
-There are two buttons available to save some clicks when exchanging a lot of skill cards.  
+There are four buttons available to save some clicks when exchanging a lot of skill cards.  
 For the buttons to work as intended **you must have the npc skill card dialogue open when clicking.**
 
 #### Known issues:  
