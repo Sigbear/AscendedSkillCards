@@ -601,7 +601,7 @@ ScanForUnknownSkillCards = function()
             end
 
             -- check if skillcard is unknown
-            local isSkillCardKnown = IsCollectionItemOwned(skillCardId)
+            local isSkillCardKnown = C_VanityCollection.IsCollectionItemOwned(skillCardId)
             if (isSkillCardKnown == nil) then
               print("AscendedSkillCards: Could not find info about skill card. Please try opening the VANITY collection tab to refresh the information")
             elseif (isSkillCardKnown == false) then
